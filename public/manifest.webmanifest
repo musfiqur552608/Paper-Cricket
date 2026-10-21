@@ -1,0 +1,17 @@
+{
+  "name": "Paper Cricket — কাগজের ক্রিকেট",
+  "short_name": "Paper Cricket",
+  "description": "A nostalgic, real-time two-player paper cricket game.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf5e7",
+  "theme_color": "#faf5e7",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

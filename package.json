@@ -1,0 +1,45 @@
+{
+  "name": "paper-cricket",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Paper Cricket — কাগজের ক্রিকেট. A nostalgic, real-time 2-player paper cricket game.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/caveat": "^5.3.0",
+    "@fontsource/courier-prime": "^5.3.0",
+    "@fontsource/hind-siliguri": "^5.3.0",
+    "@supabase/supabase-js": "^2.49.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^11.18.2",
+    "html-to-image": "^1.11.13",
+    "i18next": "^24.2.2",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.475.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-i18next": "^15.4.0",
+    "react-router-dom": "^7.18.4",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vitest": "^2.1.9"
+  }
+}
