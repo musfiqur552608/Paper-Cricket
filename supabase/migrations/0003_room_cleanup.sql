@@ -1,6 +1,6 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 --  PAPER CRICKET · কাগজের ক্রিকেট
---  Migration 0002 — delete the whole room as soon as a player leaves.
+--  Migration 0003 — delete the whole room as soon as a player leaves.
 --
 --  Previously, a live game only became "abandoned": the leaving player's row,
 --  their squad, the innings and every ball stayed in the database until the

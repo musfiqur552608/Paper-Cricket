@@ -77,7 +77,8 @@ export const SEGMENT_ANGLE = 360 / BOARD_SEGMENTS.length
 export const GAME_DEFAULTS = {
   overs: 2,
   wickets: 2,
-  squadSize: 5,
+  /** The squad is always exactly as large as the wicket setting. */
+  squadSize: 2,
   maxSquadSize: 11,
   minSquadSize: 1,
   maxOvers: 10,
@@ -91,8 +92,8 @@ export const DEFAULT_RULES: RoomRules = {
 }
 
 export const DEFAULT_SQUADS = {
-  en: ['Rafi', 'Siam', 'Arif', 'Neel', 'Shuvo'],
-  bn: ['রাফি', 'সিয়াম', 'আরিফ', 'নীল', 'শুভ'],
+  en: ['Rafi', 'Siam', 'Arif', 'Neel', 'Shuvo', 'Tanvir', 'Rohan', 'Sakib', 'Fahim', 'Imran', 'Nayeem'],
+  bn: ['রাফি', 'সিয়াম', 'আরিফ', 'নীল', 'শুভ', 'তানভীর', 'রোহান', 'সাকিব', 'ফাহিম', 'ইমরান', 'নাঈম'],
 } as const
 
 export const SPIN = {
@@ -101,7 +102,7 @@ export const SPIN = {
   maxDurationMs: 4800,
   aimWindowMs: 10_000,
   revealHoldMs: 4300,
-  /** The pen travels from the aiming position all the way to the rim. */
+  /** The pen travels from its aim position all the way to the rim. */
   penSlideMs: 640,
   presenceGraceMs: 60_000,
   heartbeatMs: 20_000,
@@ -123,8 +124,20 @@ export const APP_URL = typeof window !== 'undefined' ? window.location.origin : 
 
 export const BOARD_BLUE = '#234e8b'
 
-export function makeDefaultSquad(names: readonly string[] = DEFAULT_SQUADS.en): PlayerSquad[] {
-  return names.slice(0, GAME_DEFAULTS.maxSquadSize).map((name, index) => ({
+export function makeSquadNames(
+  names: readonly string[],
+  count: number,
+  placeholder: (position: number) => string = (position) => `Player ${position}`,
+): string[] {
+  const size = Math.max(GAME_DEFAULTS.minSquadSize, Math.min(count, GAME_DEFAULTS.maxSquadSize))
+  return Array.from({ length: size }, (_, index) => names[index] ?? placeholder(index + 1))
+}
+
+export function makeDefaultSquad(
+  names: readonly string[] = DEFAULT_SQUADS.en,
+  count: number = GAME_DEFAULTS.squadSize,
+): PlayerSquad[] {
+  return makeSquadNames(names, count).map((name, index) => ({
     position: index,
     name,
   }))

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import clsx from 'clsx'
@@ -6,7 +6,6 @@ import {
   AlertCircle,
   Check,
   CheckCircle2,
-  ChevronLeft,
   ChevronRight,
   Clock3,
   Copy,
@@ -27,12 +26,13 @@ import type { MatchSnapshot, RoomRules } from '../../types/game'
 import { AppHeader } from '../../components/ui/AppHeader'
 import { Dialog } from '../../components/ui/Dialog'
 import { LeaveConfirmDialog } from '../../components/ui/LeaveConfirmDialog'
+import { RuleStepper } from '../../components/ui/RuleStepper'
 import { PlayerAvatar } from '../../components/game/PlayerAvatar'
 import { SquadEditor } from './SquadEditor'
 import { InviteDialog } from './InviteDialog'
 import { setPlayerReady, startMatch, updatePlayerProfile, updateRoomSettings } from '../../lib/supabase/api'
 import { errorKey, toAppError } from '../../lib/errors'
-import { GAME_DEFAULTS } from '../../config/gameConfig'
+import { GAME_DEFAULTS, makeSquadNames } from '../../config/gameConfig'
 import { notify } from '../../store/toast'
 import { copyText } from '../../lib/share'
 import { sound } from '../../lib/sound'
@@ -77,14 +77,47 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
   const [rules, setRules] = useState<RoomRules>({
     overs: room.overs,
     wickets: room.wickets,
-    batFirst: room.batFirst,
+    batFirst: 'toss',
     superOver: room.superOver,
   })
   const [copiedCode, setCopiedCode] = useState(false)
+  const normalizeKeyRef = useRef('')
 
   useEffect(() => {
-    setRules({ overs: room.overs, wickets: room.wickets, batFirst: room.batFirst, superOver: room.superOver })
-  }, [room.overs, room.wickets, room.batFirst, room.superOver])
+    setRules({ overs: room.overs, wickets: room.wickets, batFirst: 'toss', superOver: room.superOver })
+  }, [room.overs, room.wickets, room.superOver])
+
+  // Older databases can return a squad that is longer or shorter than the
+  // wicket setting (for example, an 11-name fallback from the join screen).
+  // Normalise this player's sheet once the authoritative room rules arrive.
+  useEffect(() => {
+    if (!me || me.squad.length === room.wickets) return
+    const key = `${room.id}:${me.userId}:${room.wickets}:${me.squad.length}`
+    if (normalizeKeyRef.current === key) return
+    normalizeKeyRef.current = key
+    const squad = makeSquadNames(
+      me.squad.map((player) => player.name),
+      room.wickets,
+      (position) => t('lobby.playerN', { n: position }),
+    )
+    void updatePlayerProfile(room.id, { name: me.name, teamName: me.teamName, squad })
+      .then(() => refresh())
+      .catch(() => {
+        normalizeKeyRef.current = ''
+      })
+  }, [me, refresh, room.id, room.wickets, t])
+
+  useEffect(() => {
+    if (!profileOpen) return
+    setProfileSquad((current) => {
+      if (current.length === rules.wickets) return current
+      const next = current.slice(0, rules.wickets)
+      while (next.length < rules.wickets) {
+        next.push(t('lobby.playerN', { n: next.length + 1 }))
+      }
+      return next
+    })
+  }, [profileOpen, rules.wickets, t])
 
   function openProfile() {
     if (!me) return
@@ -95,12 +128,10 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
     setProfileOpen(true)
   }
 
-  const minSquad = activePlayers.length > 0
-    ? Math.min(...activePlayers.map((player) => player.squad.length))
-    : me?.squad.length ?? GAME_DEFAULTS.maxSquadSize
-  const wicketsMax = Math.max(1, Math.min(11, minSquad))
   const bothReady = activePlayers.length === 2 && activePlayers.every((player) => player.isReady)
-  const canStart = isHost && bothReady && !startBusy
+  const squadsAligned =
+    activePlayers.length === 2 && activePlayers.every((player) => player.squad.length === rules.wickets)
+  const canStart = isHost && bothReady && squadsAligned && !settingsBusy && !startBusy
 
   async function toggleReady() {
     if (!me || readyBusy) return
@@ -151,10 +182,11 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
   async function saveRules(next: RoomRules) {
     if (!isHost || settingsBusy) return
     const previous = rules
-    setRules(next)
+    const safeNext: RoomRules = { ...next, batFirst: 'toss' }
+    setRules(safeNext)
     setSettingsBusy(true)
     try {
-      await updateRoomSettings(room.id, next)
+      await updateRoomSettings(room.id, safeNext)
       await refresh()
     } catch (caught) {
       setRules(previous)
@@ -169,6 +201,10 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
     setStartBusy(true)
     sound.cheer()
     try {
+      // The toss decides who opens the batting. Write it just before the
+      // server creates the first innings so old rooms cannot keep a host
+      // bat-first setting.
+      await updateRoomSettings(room.id, { ...rules, batFirst: 'toss' })
       await startMatch(room.id)
       await refresh()
     } catch (caught) {
@@ -385,11 +421,13 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
                 <AlertCircle size={14} className="text-ink/45" />
                 {activePlayers.length < 2
                   ? t('lobby.startWaitPlayers')
-                  : !bothReady
-                    ? t('lobby.startWaitReady')
-                    : isHost
-                      ? t('lobby.rulesTitle')
-                      : t('lobby.waitingHost')}
+                  : !squadsAligned
+                    ? t('lobby.waitSquads', { count: rules.wickets })
+                    : !bothReady
+                      ? t('lobby.startWaitReady')
+                      : isHost
+                        ? t('lobby.rulesTitle')
+                        : t('lobby.waitingHost')}
               </div>
               <span className="text-[10.5px] text-slate-400">{t('lobby.rulesLine', { overs: rules.overs, wickets: rules.wickets })}</span>
             </div>
@@ -442,7 +480,7 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
             </div>
 
             <div className="space-y-3">
-              <Stepper
+              <RuleStepper
                 label={t('common.overs')}
                 value={rules.overs}
                 min={1}
@@ -450,32 +488,20 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
                 disabled={!isHost || settingsBusy}
                 onChange={(value) => void saveRules({ ...rules, overs: value })}
               />
-              <Stepper
+              <RuleStepper
                 label={t('common.wickets')}
                 value={rules.wickets}
                 min={1}
-                max={wicketsMax}
+                max={GAME_DEFAULTS.maxSquadSize}
                 disabled={!isHost || settingsBusy}
                 onChange={(value) => void saveRules({ ...rules, wickets: value })}
               />
-              <div>
-                <p className="label mb-1">{t('lobby.batFirst')}</p>
-                <div className="grid grid-cols-3 gap-1 rounded-xl border border-[#d8c8ab] bg-paper-100/60 p-1">
-                  {(['host', 'guest', 'toss'] as const).map((choice) => (
-                    <button
-                      key={choice}
-                      type="button"
-                      disabled={!isHost || settingsBusy}
-                      onClick={() => void saveRules({ ...rules, batFirst: choice })}
-                      className={clsx(
-                        'rounded-lg px-1 py-1.5 text-[11px] font-semibold transition disabled:opacity-60',
-                        rules.batFirst === choice ? 'bg-white text-ink shadow-sm' : 'text-slate-500 hover:text-ink',
-                      )}
-                    >
-                      {choice === 'host' ? t('lobby.batFirstHost') : choice === 'guest' ? t('lobby.batFirstGuest') : t('lobby.batFirstToss')}
-                    </button>
-                  ))}
-                </div>
+              <p className="-mt-1 px-1 text-[10.5px] leading-snug text-slate-400">
+                {t('lobby.wicketsSetSquad', { count: rules.wickets })}
+              </p>
+              <div className="rounded-xl border border-[#d8c8ab] bg-white/40 px-3 py-2.5">
+                <p className="text-[12px] font-semibold text-slate-700">{t('lobby.batFirst')}</p>
+                <p className="mt-1 text-[10.5px] leading-snug text-slate-400">{t('lobby.coinTossNote')}</p>
               </div>
               <div className="flex items-center justify-between gap-2 rounded-xl border border-[#d8c8ab] bg-white/40 px-3 py-2.5">
                 <div>
@@ -509,7 +535,7 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
                 {t('lobby.settingsSummary', {
                   overs: rules.overs,
                   wickets: rules.wickets,
-                  squad: activePlayers.length === 2 ? Math.min(...activePlayers.map((p) => p.squad.length)) : me.squad.length,
+                  squad: rules.wickets,
                 })}
               </p>
             </div>
@@ -589,49 +615,6 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
         title={t('lobby.leaveTitle')}
         body={t('lobby.leaveBodyLobby')}
       />
-    </div>
-  )
-}
-
-function Stepper({
-  label,
-  value,
-  min,
-  max,
-  onChange,
-  disabled,
-}: {
-  label: string
-  value: number
-  min: number
-  max: number
-  onChange: (value: number) => void
-  disabled?: boolean
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-[#d8c8ab] bg-white/40 px-3 py-2.5">
-      <span className="text-[12px] font-semibold text-slate-700">{label}</span>
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          disabled={disabled || value <= min}
-          onClick={() => onChange(value - 1)}
-          aria-label={`${label} −`}
-          className="grid h-7 w-7 place-items-center rounded-md border border-[#d8c8ab] bg-paper-50 text-slate-500 hover:bg-white disabled:opacity-30"
-        >
-          <ChevronLeft size={13} />
-        </button>
-        <span className="w-7 text-center font-mono text-sm font-bold text-ink-deep">{value}</span>
-        <button
-          type="button"
-          disabled={disabled || value >= max}
-          onClick={() => onChange(value + 1)}
-          aria-label={`${label} +`}
-          className="grid h-7 w-7 place-items-center rounded-md border border-[#d8c8ab] bg-paper-50 text-slate-500 hover:bg-white disabled:opacity-30"
-        >
-          <ChevronRight size={13} />
-        </button>
-      </div>
     </div>
   )
 }

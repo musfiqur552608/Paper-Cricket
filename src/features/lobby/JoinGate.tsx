@@ -4,7 +4,7 @@ import { ArrowRight, ClipboardPaste, UserPlus } from 'lucide-react'
 import { AppHeader } from '../../components/ui/AppHeader'
 import { PlayerAvatar } from '../../components/game/PlayerAvatar'
 import { SquadEditor } from '../lobby/SquadEditor'
-import { DEFAULT_SQUADS, makeDefaultSquad } from '../../config/gameConfig'
+import { DEFAULT_SQUADS, GAME_DEFAULTS, makeSquadNames } from '../../config/gameConfig'
 import { joinRoom } from '../../lib/supabase/api'
 import type { PeekRoom } from '../../lib/supabase/api'
 import { errorKey, toAppError } from '../../lib/errors'
@@ -20,6 +20,8 @@ export function JoinGate({
 }) {
   const { t, i18n } = useTranslation()
   const isBn = i18n.language.startsWith('bn')
+  const wicketsKnown = typeof peek.wickets === 'number' && peek.wickets >= 1
+  const roomWickets = Math.max(1, Math.min(peek.wickets ?? GAME_DEFAULTS.maxSquadSize, GAME_DEFAULTS.maxSquadSize))
   const [name, setName] = useState(() => {
     try {
       return window.localStorage.getItem('pc.name') ?? ''
@@ -36,7 +38,11 @@ export function JoinGate({
   })
   const [showSquad, setShowSquad] = useState(false)
   const [squad, setSquad] = useState<string[]>(() =>
-    makeDefaultSquad(isBn ? DEFAULT_SQUADS.bn : DEFAULT_SQUADS.en).map((player) => player.name),
+    makeSquadNames(
+      isBn ? DEFAULT_SQUADS.bn : DEFAULT_SQUADS.en,
+      roomWickets,
+      (position) => t('lobby.playerN', { n: position }),
+    ),
   )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -101,6 +107,17 @@ export function JoinGate({
               </div>
             </div>
             <div className="my-4 border-t border-dashed border-ink/15" />
+            {wicketsKnown ? (
+              <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-semibold text-slate-500">
+                <span>{t('lobby.rulesLine', { overs: peek.overs ?? GAME_DEFAULTS.overs, wickets: roomWickets })}</span>
+                <span className="text-slate-300">·</span>
+                <span>{t('lobby.squadCount', { count: roomWickets })}</span>
+              </div>
+            ) : (
+              <p className="mb-3 text-[10.5px] font-semibold leading-snug text-slate-500">
+                {t('join.teamSizedAfterJoin')}
+              </p>
+            )}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">{t('common.roomCode')}</p>
@@ -163,7 +180,7 @@ export function JoinGate({
               >
                 <span className="flex items-center gap-2">
                   <ClipboardPaste size={14} className="text-ink/60" />
-                  {t('join.teamSheetOptional')}
+                  {t('join.teamSheetOptional')} · {squad.length}
                 </span>
                 <span className="font-hand text-lg text-ink/40">{showSquad ? '−' : '+'}</span>
               </button>

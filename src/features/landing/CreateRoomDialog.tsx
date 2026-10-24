@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { AlertCircle, ArrowRight, PenLine } from 'lucide-react'
 import { Dialog } from '../../components/ui/Dialog'
-import { createRoom } from '../../lib/supabase/api'
+import { RuleStepper } from '../../components/ui/RuleStepper'
+import { createRoom, updateRoomSettings } from '../../lib/supabase/api'
 import { errorKey, toAppError } from '../../lib/errors'
-import { DEFAULT_SQUADS, IS_SUPABASE_CONFIGURED, makeDefaultSquad } from '../../config/gameConfig'
+import { DEFAULT_SQUADS, GAME_DEFAULTS, IS_SUPABASE_CONFIGURED, makeSquadNames } from '../../config/gameConfig'
 import { notify } from '../../store/toast'
 import { sound } from '../../lib/sound'
 
@@ -23,6 +24,8 @@ export function CreateRoomDialog({ open, onClose }: { open: boolean; onClose: ()
   const isBn = i18n.language.startsWith('bn')
   const [name, setName] = useState(() => readSaved('pc.name'))
   const [teamName, setTeamName] = useState(() => readSaved('pc.team'))
+  const [overs, setOvers] = useState<number>(GAME_DEFAULTS.overs)
+  const [wickets, setWickets] = useState<number>(GAME_DEFAULTS.wickets)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -31,6 +34,8 @@ export function CreateRoomDialog({ open, onClose }: { open: boolean; onClose: ()
       setError(null)
       setName(readSaved('pc.name'))
       setTeamName(readSaved('pc.team'))
+      setOvers(GAME_DEFAULTS.overs)
+      setWickets(GAME_DEFAULTS.wickets)
     }
   }, [open])
 
@@ -55,8 +60,14 @@ export function CreateRoomDialog({ open, onClose }: { open: boolean; onClose: ()
     try {
       sound.click()
       const defaultNames = isBn ? DEFAULT_SQUADS.bn : DEFAULT_SQUADS.en
-      const squad = makeDefaultSquad(defaultNames).map((player) => player.name)
+      const squad = makeSquadNames(defaultNames, wickets, (position) => t('lobby.playerN', { n: position }))
       const result = await createRoom({ name: name.trim(), teamName: teamName.trim(), squad })
+      await updateRoomSettings(result.roomId, {
+        overs,
+        wickets,
+        batFirst: 'toss',
+        superOver: true,
+      })
       try {
         window.localStorage.setItem('pc.name', name.trim())
         window.localStorage.setItem('pc.team', teamName.trim())
@@ -124,9 +135,34 @@ export function CreateRoomDialog({ open, onClose }: { open: boolean; onClose: ()
           />
         </div>
 
-        <div className="rounded-xl border border-[#e1d3b8] bg-white/45 px-3 py-2.5">
-          <p className="text-xs font-semibold text-ink-deep">{t('create.starterSquad')}</p>
-          <p className="mt-0.5 text-[11.5px] leading-snug text-slate-500">{t('create.starterSquadBody')}</p>
+        <div className="rounded-xl border border-[#e1d3b8] bg-white/45 px-3 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{t('create.matchSetup')}</p>
+            <span className="chip border-ink/15 bg-ink/[0.055] text-ink/70">
+              {t('create.playersFromWickets', { count: wickets })}
+            </span>
+          </div>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <RuleStepper
+              label={t('common.overs')}
+              value={overs}
+              min={1}
+              max={GAME_DEFAULTS.maxOvers}
+              disabled={busy}
+              onChange={setOvers}
+            />
+            <RuleStepper
+              label={t('common.wickets')}
+              value={wickets}
+              min={1}
+              max={GAME_DEFAULTS.maxSquadSize}
+              disabled={busy}
+              onChange={setWickets}
+            />
+          </div>
+          <p className="mt-2 text-[11.5px] leading-snug text-slate-500">
+            {t('create.starterSquad', { count: wickets })} · {t('create.starterSquadBody')}
+          </p>
         </div>
 
         {error ? (

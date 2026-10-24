@@ -31,6 +31,9 @@ export interface PeekRoom {
   isMember: boolean
   hostTeamName: string | null
   hostName: string | null
+  /** Added in migration 0002; optional so old projects keep working. */
+  overs?: number
+  wickets?: number
 }
 
 export function normalizeRoomCode(raw: string): string {

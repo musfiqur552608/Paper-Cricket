@@ -1,7 +1,16 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { BOARD_SEGMENTS, ROOM_CODE, SEGMENT_ANGLE } from './gameConfig'
+import {
+  BOARD_SEGMENTS,
+  DEFAULT_SQUADS,
+  GAME_DEFAULTS,
+  ROOM_CODE,
+  SEGMENT_ANGLE,
+  SPIN,
+  makeDefaultSquad,
+  makeSquadNames,
+} from './gameConfig'
 
 const migration = readFileSync(resolve(process.cwd(), 'supabase/migrations/0001_init.sql'), 'utf8')
 
@@ -55,5 +64,33 @@ describe('room codes', () => {
     }
     expect(ROOM_CODE.alphabet).toHaveLength(32)
     expect(ROOM_CODE.length).toBe(6)
+  })
+})
+
+describe('wicket-led squads', () => {
+  it('makes exactly one batter per wicket, capped by the board', () => {
+    expect(makeSquadNames(DEFAULT_SQUADS.en, 10)).toHaveLength(10)
+    expect(makeSquadNames(DEFAULT_SQUADS.en, 10)[9]).toBe('Imran')
+    expect(makeSquadNames(DEFAULT_SQUADS.en, 99)).toHaveLength(GAME_DEFAULTS.maxSquadSize)
+    expect(makeSquadNames(DEFAULT_SQUADS.en, 1)).toHaveLength(1)
+  })
+
+  it('pads a short name list with a caller-provided placeholder', () => {
+    expect(makeSquadNames(['Rafi'], 4, (position) => `Batter ${position}`)).toEqual([
+      'Rafi',
+      'Batter 2',
+      'Batter 3',
+      'Batter 4',
+    ])
+  })
+
+  it('keeps the default squad in step with the default wicket count', () => {
+    const squad = makeDefaultSquad(DEFAULT_SQUADS.en)
+    expect(squad).toHaveLength(GAME_DEFAULTS.squadSize)
+    expect(squad.map((player) => player.position)).toEqual([0, 1])
+  })
+
+  it('leaves enough time for the pen to reach the rim', () => {
+    expect(SPIN.penSlideMs).toBeGreaterThanOrEqual(500)
   })
 })

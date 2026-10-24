@@ -12,7 +12,7 @@ No accounts. No downloads. Just a room code, a bit of mischief, and eleven hand-
 - **Hidden, server-side spins** — the final board rotation is generated with Postgres randomness, sealed in a private table, and revealed only after the ball is scored.
 - **The full paper-cricket ritual** — batter holds the pen, bowler spins, an opaque paper screen hides the board, the batter drags the pen blindly, then the paper lifts and the result is stamped.
 - **Complete scoring** — runs, fours, sixes, wickets, extras, free hits, fall of wickets, targets, required run rate, over timelines, and player scorecards.
-- **Lobby rules** — 1–10 overs, 1–squad-size wickets, editable squads (default 5, max 11), host/guest bat-first choice or server coin toss, optional one-over super over.
+- **Lobby rules** — 1–10 overs, 1–11 wickets, one batter per wicket (10 wickets means 10 players a side), server coin toss, optional one-over super over.
 - **Result scorebook** — winner banner, both innings, super-over scorecards, fall of wickets, over-by-over timeline, runs-per-over chart, match stats, PNG/PDF export, native share, and WhatsApp/Telegram/Messenger fallbacks.
 - **Reconnect and grace** — anonymous sessions restore seats, snapshots restore the match, and a disconnected opponent can be claimed after a 60-second grace period.
 - **Bilingual by default** — Bengali first, English toggle, complete UI translation.
@@ -100,15 +100,16 @@ Open **SQL Editor → New query**, paste the complete contents of:
 
 ```text
 supabase/migrations/0001_init.sql
-supabase/migrations/0002_room_cleanup.sql
-supabase/migrations/0003_restore_squad_behavior.sql
+supabase/migrations/0002_wicket_squads.sql
+supabase/migrations/0003_room_cleanup.sql
 ```
 
 and run them in order on a fresh project. On an existing project that already
-has `0001`, run `0002_room_cleanup.sql` and `0003_restore_squad_behavior.sql`.
-`0002` replaces `leave_room` with a hard delete so a room and all of its related
-rows disappear as soon as a player leaves. `0003` restores the original
-independent squad rules if the earlier wicket-squad experiment was applied.
+has `0001`, run `0002_wicket_squads.sql` and `0003_room_cleanup.sql`.
+`0002` makes the wicket setting authoritative for squad size: 10 wickets means
+10 batters a side, and changing the wicket count trims or pads both squads.
+`0003` replaces `leave_room` with a hard delete so a room and all of its related
+rows disappear as soon as a player leaves.
 
 Migration `0001` creates:
 
@@ -183,10 +184,10 @@ The production build writes to `dist/`. Vendor code is split into React, Supabas
 2. The second player opens `/room/CODE`, sees the host's team, and joins.
 3. A third player sees **Room full**.
 4. Both players edit their names, team names, and squads.
-5. The host sets overs, wickets, bat-first choice, and whether a super over is enabled.
+5. The host sets overs, wickets, and whether a super over is enabled. The server tosses a coin to decide who bats first.
 6. Both players mark ready, then the host starts the match.
 
-Defaults: **2 overs, 2 wickets, 5-player squad, toss decides who bats, super over enabled**. Squads can hold up to 11 players.
+Defaults: **2 overs, 2 wickets, 2-player squads, server coin toss, super over enabled**. Wickets can go up to 11, and both squads follow the wicket count.
 
 ### One delivery
 
