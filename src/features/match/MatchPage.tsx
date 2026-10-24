@@ -30,6 +30,7 @@ import { HoldPen } from './HoldPen'
 import { OpaqueScreen } from './OpaqueScreen'
 import { ConfettiBurst } from './ConfettiBurst'
 import { InningsPanel, LiveScore } from './LiveScore'
+import { InningsBreak } from './InningsBreak'
 import { advanceBall, claimForfeit, setBatterReady, startSpin, submitAim } from '../../lib/supabase/api'
 import { getMatchView } from '../../lib/matchView'
 import { useServerClock, useSpinAnimation } from '../../hooks/useMatchTiming'
@@ -76,6 +77,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
   const [leaveOpen, setLeaveOpen] = useState(false)
   const [claiming, setClaiming] = useState(false)
   const [advancing, setAdvancing] = useState(false)
+  const [inningsBreakOpen, setInningsBreakOpen] = useState(false)
   const submittedRef = useRef<string | null>(null)
   const rescuedRef = useRef<string | null>(null)
   const spinSoundRef = useRef<string | null>(null)
@@ -298,6 +300,17 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     // We intentionally restart only for a new ball.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealedBall?.id])
+
+  // Give the last-ball card a moment to land, then hand over to the 3-second
+  // innings-break animation. The overlay calls doAdvance when it finishes.
+  useEffect(() => {
+    if (!revealedBall || room.pendingTransition !== 'innings') {
+      setInningsBreakOpen(false)
+      return
+    }
+    const timer = window.setTimeout(() => setInningsBreakOpen(true), 1000)
+    return () => window.clearTimeout(timer)
+  }, [revealedBall?.id, room.pendingTransition])
 
   async function markPenReady() {
     if (!isBatter || readyBusy || batterReady) return
@@ -675,6 +688,16 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
         title={t('match.leaveTitle')}
         body={t('match.leaveBody')}
         leavingLabel={t('match.leaveConfirm')}
+      />
+
+      <InningsBreak
+        open={inningsBreakOpen}
+        teamName={view.battingPlayer?.teamName ?? ''}
+        runs={view.innings?.runs ?? 0}
+        wickets={view.innings?.wickets ?? 0}
+        overs={formatOvers(view.innings?.legalBalls ?? 0)}
+        target={room.target ?? null}
+        onDone={() => void doAdvance()}
       />
     </div>
   )

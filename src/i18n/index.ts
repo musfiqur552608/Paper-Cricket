@@ -607,6 +607,12 @@ const en = {
     starting: 'Starting the match…',
     handsOff: 'The server has already sealed the result.',
   },
+  inningsBreak: {
+    title: 'Innings break',
+    target: 'Target {{target}}',
+    next: 'Second innings starts in {{count}}…',
+    starting: 'Second innings starting…',
+  },
   audio: {
     toggleOn: 'Turn sound on',
     toggleOff: 'Turn sound off',
@@ -1223,6 +1229,12 @@ const bn: typeof en = {
     batFirst: '{{team}} আগে ব্যাট করবে',
     starting: 'ম্যাচ শুরু হচ্ছে…',
     handsOff: 'সার্ভারই ফলাফল ঠিক করেছে।',
+  },
+  inningsBreak: {
+    title: 'ইনিংস বিরতি',
+    target: 'লক্ষ্য {{target}}',
+    next: 'দ্বিতীয় ইনিংস শুরু হবে {{count}} সেকেন্ডে…',
+    starting: 'দ্বিতীয় ইনিংস শুরু হচ্ছে…',
   },
   audio: {
     toggleOn: 'আওয়াজ চালু করো',
