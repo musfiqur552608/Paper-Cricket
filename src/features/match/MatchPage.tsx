@@ -204,10 +204,11 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
       setAimAngle(safeAngle)
       setSliding(true)
       if (!auto) {
-        sound.slide(850)
+        sound.slide(SPIN.penSlideMs + 220)
         haptic(22)
       }
-      if (!auto) await sleep(SPIN.revealHoldMs > 0 ? 420 : 0)
+      // Let the pen reach the rim before the server result replaces the screen.
+      if (!auto) await sleep(SPIN.penSlideMs)
 
       let lastError: unknown = null
       for (let attempt = 0; attempt < 2; attempt += 1) {

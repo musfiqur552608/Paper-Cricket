@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, PenLine } from 'lucide-react'
+import { Check } from 'lucide-react'
 import clsx from 'clsx'
 import { haptic } from '../../lib/sound'
+import { Pen3D } from '../../components/board/Pen3D'
 
 const HOLD_MS = 700
 
@@ -114,7 +115,16 @@ export function HoldPen({
           }}
           disabled={disabled || ready}
         >
-          {complete ? <Check size={30} /> : <PenLine size={30} className={holding ? 'animate-pulse' : ''} />}
+          {complete ? (
+            <Check size={30} />
+          ) : (
+            <Pen3D
+              className={clsx(
+                'h-11 w-[88px] -rotate-[24deg] transition-transform duration-200',
+                holding ? 'translate-y-[2px] scale-[.97]' : 'drop-shadow-sm',
+              )}
+            />
+          )}
           {!complete || holding ? (
             <svg className="pointer-events-none absolute inset-[-7px] h-[102px] w-[102px] -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
               <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(35,78,139,.13)" strokeWidth="3" />

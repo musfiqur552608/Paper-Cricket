@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { EyeOff, Hourglass, Lock, PenLine, Timer } from 'lucide-react'
 import clsx from 'clsx'
 import { usePreferences } from '../../store/preferences'
+import { SPIN } from '../../config/gameConfig'
+import { Pen3D, PenGraphic } from '../../components/board/Pen3D'
 
 type ScreenPhase = 'spinning' | 'aiming'
 
@@ -115,9 +117,10 @@ export function OpaqueScreen({
   }
 
   const radians = (aimAngle * Math.PI) / 180
-  const aimRadius = sliding ? 178 : 128
+  const aimRadius = sliding ? 186 : 124
   const endX = 200 + Math.sin(radians) * aimRadius
   const endY = 200 - Math.cos(radians) * aimRadius
+  const penSlide = reduced ? 0 : SPIN.penSlideMs / 1000
 
   return (
     <AnimatePresence>
@@ -149,7 +152,7 @@ export function OpaqueScreen({
                     style={{ animationDuration: `${Math.max(1.4, spinDurationMs / 4500)}s` }}
                   />
                   <div className="absolute inset-5 rounded-full border border-ink/15" />
-                  <PenLine size={34} className="text-ink/65" />
+                  <Pen3D className="h-14 w-32 -rotate-[18deg]" />
                   <span className="absolute -right-1 top-1 h-2.5 w-2.5 rounded-full bg-marigold" />
                 </div>
                 <p className="mt-5 font-hand text-[30px] font-bold leading-none text-ink-deep">
@@ -202,31 +205,33 @@ export function OpaqueScreen({
                     <div className="absolute inset-[12%] rounded-full border border-dashed border-ink/15" />
                     <div className="absolute inset-[28%] rounded-full border border-ink/10" />
                     <svg viewBox="0 0 400 400" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
-                      <defs>
-                        <marker id="aim-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                          <path d="M 0 0 L 10 5 L 0 10 z" fill="#c8544a" />
-                        </marker>
-                      </defs>
                       <line x1="200" y1="200" x2="200" y2="200" stroke="#c8544a" strokeWidth="2" opacity={showAim ? 0.25 : 0} />
                       <circle cx="200" cy="200" r="7" fill="#fff8f1" stroke="#c8544a" strokeWidth="2.5" />
                       {showAim ? (
                         <>
-                          <line
+                          <motion.line
                             x1="200"
                             y1="200"
-                            x2={endX}
-                            y2={endY}
+                            initial={false}
+                            animate={{ x2: endX, y2: endY }}
+                            transition={{ duration: sliding ? penSlide : 0, ease: [0.16, 1, 0.3, 1] }}
                             stroke="#c8544a"
-                            strokeWidth="3.5"
+                            strokeWidth="3"
                             strokeLinecap="round"
-                            strokeDasharray={dragging ? '7 8' : undefined}
-                            markerEnd="url(#aim-arrow)"
-                            opacity={0.9}
-                            style={{ transition: sliding ? 'all .7s cubic-bezier(.2,.8,.3,1)' : 'none' }}
+                            strokeDasharray={dragging ? '7 8' : '10 10'}
+                            opacity={0.72}
                           />
-                          <g transform={`translate(${endX} ${endY}) rotate(${aimAngle})`} style={{ transition: sliding ? 'transform .7s cubic-bezier(.2,.8,.3,1)' : 'none' }}>
-                            <path d="M 4 -4 L 18 -9 L 24 0 L 18 9 L 4 4 Z" fill="#fdf8ef" stroke="#9d4139" strokeWidth="1.4" />
-                          </g>
+                          <motion.g
+                            initial={false}
+                            animate={{ x: endX, y: endY }}
+                            transition={{ duration: sliding ? penSlide : 0, ease: [0.16, 1, 0.3, 1] }}
+                          >
+                            <g transform={`rotate(${aimAngle + 90})`}>
+                              <g transform="scale(0.46)">
+                                <PenGraphic />
+                              </g>
+                            </g>
+                          </motion.g>
                         </>
                       ) : null}
                     </svg>

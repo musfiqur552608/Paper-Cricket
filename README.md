@@ -100,11 +100,15 @@ Open **SQL Editor → New query**, paste the complete contents of:
 
 ```text
 supabase/migrations/0001_init.sql
+supabase/migrations/0002_room_cleanup.sql
 ```
 
-and run it once on a fresh project.
+and run them in order on a fresh project. On an existing project that already
+has `0001`, run only `0002_room_cleanup.sql`; it replaces `leave_room` with a
+hard delete so a room and all of its related rows disappear as soon as a
+player leaves.
 
-The migration creates:
+Migration `0001` creates:
 
 - `rooms`, `room_players`, `squads`, `innings`, `balls`, `spins`
 - indexes, checks, foreign keys, and cascade rules

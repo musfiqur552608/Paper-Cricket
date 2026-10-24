@@ -2,6 +2,7 @@ import { useId } from 'react'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { BOARD_SEGMENTS, SEGMENT_ANGLE } from '../../config/gameConfig'
+import { PenGraphic } from './Pen3D'
 
 const SIZE = 560
 const CX = SIZE / 2
@@ -269,16 +270,8 @@ export function Board({
             />
             <circle cx={aimStart[0]} cy={aimStart[1]} r={4} fill="#fffdf7" stroke="#c8544a" strokeWidth="2" />
             {penAtEnd && penPoint ? (
-              <g transform={`translate(${penPoint[0]} ${penPoint[1]}) rotate(${aimAngle})`}>
-                <path
-                  d="M 0 0 L 17 -7 L 24 0 L 17 7 Z"
-                  fill="#fffdf7"
-                  stroke="#a8443d"
-                  strokeWidth="1.8"
-                  strokeLinejoin="round"
-                />
-                <path d="M 0 0 L 8 -2.8 L 8 2.8 Z" fill="#c8544a" />
-                <path d="M 24 0 L 40 0" stroke="#c8544a" strokeWidth="3" strokeLinecap="round" />
+              <g transform={`translate(${penPoint[0]} ${penPoint[1]}) rotate(${aimAngle + 90}) scale(0.54)`}>
+                <PenGraphic />
               </g>
             ) : null}
           </g>

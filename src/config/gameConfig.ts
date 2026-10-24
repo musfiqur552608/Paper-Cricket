@@ -101,6 +101,8 @@ export const SPIN = {
   maxDurationMs: 4800,
   aimWindowMs: 10_000,
   revealHoldMs: 4300,
+  /** The pen travels from the aiming position all the way to the rim. */
+  penSlideMs: 640,
   presenceGraceMs: 60_000,
   heartbeatMs: 20_000,
 } as const
