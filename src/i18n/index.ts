@@ -598,6 +598,15 @@ const en = {
     freeHitFour: ['Four on a free hit — a lovely bonus.', 'Free hit and four more!'],
     freeHitSix: ['Six on a free hit! The bowler is furious.', 'Free hit six! Straight into the back-row seats.'],
   },
+  toss: {
+    title: 'Coin toss',
+    flipping: 'The coin is in the air…',
+    hostWins: 'Host wins the toss',
+    guestWins: 'Guest wins the toss',
+    batFirst: '{{team}} will bat first',
+    starting: 'Starting the match…',
+    handsOff: 'The server has already sealed the result.',
+  },
   audio: {
     toggleOn: 'Turn sound on',
     toggleOff: 'Turn sound off',
@@ -1205,6 +1214,15 @@ const bn: typeof en = {
     ],
     freeHitFour: ['ফ্রি হিটে চার — দারুণ বোনাস।', 'ফ্রি হিট আর চার!'],
     freeHitSix: ['ফ্রি হিটে ছয়! বোলার এখন ক্ষেপেছে।', 'ফ্রি হিটে ছয়! সোজা পেছনের সারিতে।'],
+  },
+  toss: {
+    title: 'কয়েন টস',
+    flipping: 'কয়েনটা হাওয়ায়…',
+    hostWins: 'হোস্ট টস জিতেছে',
+    guestWins: 'গেস্ট টস জিতেছে',
+    batFirst: '{{team}} আগে ব্যাট করবে',
+    starting: 'ম্যাচ শুরু হচ্ছে…',
+    handsOff: 'সার্ভারই ফলাফল ঠিক করেছে।',
   },
   audio: {
     toggleOn: 'আওয়াজ চালু করো',

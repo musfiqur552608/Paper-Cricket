@@ -27,6 +27,7 @@ import { AppHeader } from '../../components/ui/AppHeader'
 import { Dialog } from '../../components/ui/Dialog'
 import { LeaveConfirmDialog } from '../../components/ui/LeaveConfirmDialog'
 import { RuleStepper } from '../../components/ui/RuleStepper'
+import { CoinToss, type TossWinner } from '../../components/ui/CoinToss'
 import { PlayerAvatar } from '../../components/game/PlayerAvatar'
 import { SquadEditor } from './SquadEditor'
 import { InviteDialog } from './InviteDialog'
@@ -82,6 +83,13 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
   })
   const [copiedCode, setCopiedCode] = useState(false)
   const normalizeKeyRef = useRef('')
+  const [tossWinner, setTossWinner] = useState<TossWinner | null>(null)
+  const [tossPhase, setTossPhase] = useState<'flipping' | 'result'>('flipping')
+  const tossShownRef = useRef<string | null>(null)
+  const hostStartPendingRef = useRef(false)
+  const lastBatFirstRef = useRef(room.batFirst)
+  const tossResultTimerRef = useRef<number | null>(null)
+  const tossStartTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
     setRules({ overs: room.overs, wickets: room.wickets, batFirst: 'toss', superOver: room.superOver })
@@ -106,6 +114,68 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
         normalizeKeyRef.current = ''
       })
   }, [me, refresh, room.id, room.wickets, t])
+
+  // The guest learns the toss result from the room's bat_first update. The
+  // host triggers its own overlay from beginMatch, so the shared ref prevents
+  // a duplicate animation.
+  useEffect(() => {
+    const previous = lastBatFirstRef.current
+    lastBatFirstRef.current = room.batFirst
+    if (room.status !== 'lobby') return
+    const side = room.batFirst
+    if ((side === 'host' || side === 'guest') && previous === 'toss' && tossShownRef.current !== side) {
+      showToss(side)
+    }
+  }, [room.batFirst, room.status])
+
+  useEffect(() => {
+    return () => {
+      if (tossResultTimerRef.current) window.clearTimeout(tossResultTimerRef.current)
+      if (tossStartTimerRef.current) window.clearTimeout(tossStartTimerRef.current)
+    }
+  }, [])
+
+  function randomTossSide(): 'host' | 'guest' {
+    try {
+      const bytes = new Uint8Array(1)
+      window.crypto.getRandomValues(bytes)
+      return (bytes[0] ?? 0) >= 128 ? 'host' : 'guest'
+    } catch {
+      return Math.random() < 0.5 ? 'host' : 'guest'
+    }
+  }
+
+  function showToss(side: 'host' | 'guest') {
+    if (tossShownRef.current === side) return
+    const host = activePlayers.find((player) => player.userId === room.hostUserId)
+    const guest = activePlayers.find((player) => player.userId !== room.hostUserId)
+    const player = side === 'host' ? host : guest
+    if (!player) return
+    tossShownRef.current = side
+    setTossWinner({ side, name: player.name, team: player.teamName })
+    setTossPhase('flipping')
+    if (tossResultTimerRef.current) window.clearTimeout(tossResultTimerRef.current)
+    if (tossStartTimerRef.current) window.clearTimeout(tossStartTimerRef.current)
+    tossResultTimerRef.current = window.setTimeout(() => setTossPhase('result'), 1650)
+    tossStartTimerRef.current = window.setTimeout(() => finishToss(), 4200)
+  }
+
+  function finishToss() {
+    setTossWinner(null)
+    setTossPhase('flipping')
+    tossShownRef.current = null
+    if (!isHost || !hostStartPendingRef.current) return
+    hostStartPendingRef.current = false
+    void (async () => {
+      try {
+        await startMatch(room.id)
+        await refresh()
+      } catch (caught) {
+        notify.error(t(errorKey(toAppError(caught).code)))
+        setStartBusy(false)
+      }
+    })()
+  }
 
   useEffect(() => {
     if (!profileOpen) return
@@ -197,20 +267,24 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
   }
 
   async function beginMatch() {
-    if (!canStart) return
+    if (!canStart || startBusy || tossWinner) return
+    const side = randomTossSide()
+    hostStartPendingRef.current = true
     setStartBusy(true)
     sound.cheer()
     try {
-      // The toss decides who opens the batting. Write it just before the
-      // server creates the first innings so old rooms cannot keep a host
-      // bat-first setting.
-      await updateRoomSettings(room.id, { ...rules, batFirst: 'toss' })
-      await startMatch(room.id)
+      // Old rooms may still have a host/guest choice stored. Reset it first so
+      // both clients see a real transition into the selected toss result.
+      if (room.batFirst !== 'toss') {
+        await updateRoomSettings(room.id, { ...rules, batFirst: 'toss' })
+      }
+      await updateRoomSettings(room.id, { ...rules, batFirst: side })
       await refresh()
+      showToss(side)
     } catch (caught) {
-      notify.error(t(errorKey(toAppError(caught).code)))
-    } finally {
+      hostStartPendingRef.current = false
       setStartBusy(false)
+      notify.error(t(errorKey(toAppError(caught).code)))
     }
   }
 
@@ -615,6 +689,8 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
         title={t('lobby.leaveTitle')}
         body={t('lobby.leaveBodyLobby')}
       />
+
+      <CoinToss open={Boolean(tossWinner)} winner={tossWinner} phase={tossPhase} />
     </div>
   )
 }
