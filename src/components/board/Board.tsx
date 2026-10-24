@@ -270,7 +270,7 @@ export function Board({
             />
             <circle cx={aimStart[0]} cy={aimStart[1]} r={4} fill="#fffdf7" stroke="#c8544a" strokeWidth="2" />
             {penAtEnd && penPoint ? (
-              <g transform={`translate(${penPoint[0]} ${penPoint[1]}) rotate(${aimAngle + 90}) scale(0.54)`}>
+              <g transform={`translate(${penPoint[0]} ${penPoint[1]}) rotate(${aimAngle + 90}) scale(0.62)`}>
                 <PenGraphic />
               </g>
             ) : null}

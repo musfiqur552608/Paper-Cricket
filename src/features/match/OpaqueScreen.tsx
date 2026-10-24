@@ -227,7 +227,7 @@ export function OpaqueScreen({
                             transition={{ duration: sliding ? penSlide : 0, ease: [0.16, 1, 0.3, 1] }}
                           >
                             <g transform={`rotate(${aimAngle + 90})`}>
-                              <g transform="scale(0.46)">
+                              <g transform="scale(0.58)">
                                 <PenGraphic />
                               </g>
                             </g>

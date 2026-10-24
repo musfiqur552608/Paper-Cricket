@@ -101,12 +101,14 @@ Open **SQL Editor → New query**, paste the complete contents of:
 ```text
 supabase/migrations/0001_init.sql
 supabase/migrations/0002_room_cleanup.sql
+supabase/migrations/0003_restore_squad_behavior.sql
 ```
 
 and run them in order on a fresh project. On an existing project that already
-has `0001`, run only `0002_room_cleanup.sql`; it replaces `leave_room` with a
-hard delete so a room and all of its related rows disappear as soon as a
-player leaves.
+has `0001`, run `0002_room_cleanup.sql` and `0003_restore_squad_behavior.sql`.
+`0002` replaces `leave_room` with a hard delete so a room and all of its related
+rows disappear as soon as a player leaves. `0003` restores the original
+independent squad rules if the earlier wicket-squad experiment was applied.
 
 Migration `0001` creates:
 

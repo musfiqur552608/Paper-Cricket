@@ -14,6 +14,8 @@ export interface RoomSession {
   presenceReady: boolean
   loading: boolean
   joining: boolean
+  /** True when a room that this client had joined has been deleted (e.g. opponent left). */
+  closed: boolean
   error: AppError | null
   refresh: () => Promise<void>
   reloadPeek: () => Promise<void>
@@ -29,13 +31,19 @@ export function useRoomSession(code: string | undefined): RoomSession {
   const [presenceReady, setPresenceReady] = useState(false)
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
+  const [closed, setClosed] = useState(false)
   const [error, setError] = useState<AppError | null>(null)
   const refreshTimer = useRef<number | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
   const inFlight = useRef(false)
+  const closedRef = useRef(false)
   const opponentId = userId
     ? snapshot?.players.find((player) => player.userId !== userId && !player.leftAt)?.userId ?? null
     : null
+
+  useEffect(() => {
+    closedRef.current = closed
+  }, [closed])
 
   const load = useCallback(async (showSpinner = false) => {
     if (!code || !supabase) return
@@ -51,9 +59,13 @@ export function useRoomSession(code: string | undefined): RoomSession {
         const data = await getRoomSnapshot(code)
         setSnapshot(data)
         setError(null)
+        setClosed(false)
+        closedRef.current = false
       } else {
         setSnapshot(null)
         setError(null)
+        setClosed(false)
+        closedRef.current = false
       }
     } catch (caught) {
       setError(toAppError(caught))
@@ -65,13 +77,24 @@ export function useRoomSession(code: string | undefined): RoomSession {
   }, [code])
 
   const refresh = useCallback(async () => {
-    if (!code || !supabase) return
+    if (!code || !supabase || closedRef.current) return
     try {
       const data = await getRoomSnapshot(code)
       setSnapshot(data)
       setError(null)
+      setClosed(false)
+      closedRef.current = false
     } catch (caught) {
       const appError = toAppError(caught)
+      if (appError.code === 'ROOM_NOT_FOUND') {
+        // The opponent left and the room was hard-deleted. Treat this as a
+        // normal end-of-room event, not as an error the player caused.
+        closedRef.current = true
+        setClosed(true)
+        setSnapshot(null)
+        setError(null)
+        return
+      }
       if (appError.code !== 'NETWORK') setError(appError)
     }
   }, [code])
@@ -120,13 +143,37 @@ export function useRoomSession(code: string | undefined): RoomSession {
     const client = supabase
     if (!client || !snapshot?.room.id || !userId) return
     const roomId = snapshot.room.id
+    const markRoomClosed = () => {
+      if (refreshTimer.current) {
+        window.clearTimeout(refreshTimer.current)
+        refreshTimer.current = null
+      }
+      closedRef.current = true
+      setClosed(true)
+      setSnapshot(null)
+      setError(null)
+    }
     const channel = client.channel(`room:${roomId}`, {
       config: { presence: { key: userId } },
     })
     channelRef.current = channel
 
     channel
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` }, scheduleRefresh)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+        scheduleRefresh,
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+        scheduleRefresh,
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+        markRoomClosed,
+      )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${roomId}` },
@@ -218,6 +265,7 @@ export function useRoomSession(code: string | undefined): RoomSession {
     presenceReady,
     loading,
     joining,
+    closed,
     error,
     refresh,
     reloadPeek,

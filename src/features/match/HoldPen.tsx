@@ -120,7 +120,7 @@ export function HoldPen({
           ) : (
             <Pen3D
               className={clsx(
-                'h-11 w-[88px] -rotate-[24deg] transition-transform duration-200',
+                'h-12 w-[94px] -rotate-[24deg] transition-transform duration-200',
                 holding ? 'translate-y-[2px] scale-[.97]' : 'drop-shadow-sm',
               )}
             />

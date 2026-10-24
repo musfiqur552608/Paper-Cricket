@@ -20,7 +20,7 @@ export function RoomPage() {
   const { t } = useTranslation()
   const { code: rawCode } = useParams<{ code: string }>()
   const navigate = useNavigate()
-  const { snapshot, peek, userId, opponentOnline, presenceReady, loading, error, refresh, reloadPeek, joinRefresh, setJoining } =
+  const { snapshot, peek, userId, opponentOnline, presenceReady, loading, closed, error, refresh, reloadPeek, joinRefresh, setJoining } =
     useRoomSession(rawCode)
   const [leaving, setLeaving] = useState(false)
   const allowExitRef = useRef(false)
@@ -163,6 +163,15 @@ export function RoomPage() {
           body={errorBody}
           onRetry={() => void reloadPeek()}
         />
+      </div>
+    )
+  }
+
+  if (closed) {
+    return (
+      <div className="min-h-dvh">
+        <AppHeader />
+        <ErrorSheet title={t('errors.roomClosedTitle')} body={t('errors.roomClosedBody')} />
       </div>
     )
   }
