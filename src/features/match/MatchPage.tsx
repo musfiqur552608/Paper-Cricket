@@ -292,7 +292,10 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
         endsAt: stopped.endsAt,
         aimDeadline: stopped.aimDeadline,
       })
-      haptic(18)
+      // "Lock" sound when the bowler releases the board
+      sound.tone(220, 0.08, 'triangle', 0.18, 0, 140)
+      sound.tone(600, 0.04, 'sine', 0.05, 0.01)
+      haptic([10, 40, 18])
       await refresh()
     } catch (caught) {
       notify.error(t(errorKey(toAppError(caught).code)))

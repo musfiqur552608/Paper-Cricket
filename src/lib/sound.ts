@@ -17,7 +17,7 @@ class SoundManager {
       if (!Ctx) return null
       this.ctx = new Ctx()
       this.master = this.ctx.createGain()
-      this.master.gain.value = 0.32
+      this.master.gain.value = 0.65
       this.master.connect(this.ctx.destination)
     }
     if (this.ctx.state === 'suspended') void this.ctx.resume()
@@ -50,7 +50,7 @@ class SoundManager {
     return source
   }
 
-  private tone(
+  tone(
     frequency: number,
     duration: number,
     type: OscillatorType = 'sine',
@@ -76,7 +76,7 @@ class SoundManager {
 
   click() {
     if (!this.canPlay()) return
-    this.tone(640, 0.05, 'triangle', 0.08)
+    this.tone(640, 0.06, 'triangle', 0.12)
   }
 
   spin(durationMs = 3000) {
@@ -84,22 +84,27 @@ class SoundManager {
     const ctx = this.context()
     if (!ctx) return
     const duration = Math.max(0.8, durationMs / 1000)
-    const source = this.noise(duration, 0.1, 900)
+    // Wind-up whoosh
+    const source = this.noise(duration, 0.18, 900)
     if (!source) return
     const filter = ctx.createBiquadFilter()
     filter.type = 'lowpass'
-    filter.frequency.setValueAtTime(500, ctx.currentTime)
-    filter.frequency.linearRampToValueAtTime(2600, ctx.currentTime + duration * 0.45)
-    filter.frequency.linearRampToValueAtTime(600, ctx.currentTime + duration)
+    filter.frequency.setValueAtTime(600, ctx.currentTime)
+    filter.frequency.linearRampToValueAtTime(2800, ctx.currentTime + duration * 0.5)
+    filter.frequency.linearRampToValueAtTime(700, ctx.currentTime + duration)
     source.connect(filter)
     source.start()
     source.stop(ctx.currentTime + duration)
+    // Soft rhythmic "tick-tick" as the board spins
+    for (let i = 0; i < duration; i += 0.25) {
+      this.tone(1200, 0.03, 'sine', 0.03, i)
+    }
   }
 
   penDown() {
     if (!this.canPlay()) return
-    this.tone(180, 0.08, 'sine', 0.14, 0, 120)
-    this.tone(700, 0.03, 'square', 0.03, 0.01)
+    this.tone(160, 0.1, 'sine', 0.18, 0, 100)
+    this.tone(680, 0.04, 'square', 0.04, 0.015)
   }
 
   slide(durationMs = 900) {
@@ -107,7 +112,7 @@ class SoundManager {
     const ctx = this.context()
     if (!ctx) return
     const duration = Math.max(0.2, durationMs / 1000)
-    const source = this.noise(duration, 0.07, 1400)
+    const source = this.noise(duration, 0.12, 1400)
     if (!source) return
     const filter = ctx.createBiquadFilter()
     filter.type = 'highpass'
@@ -115,55 +120,56 @@ class SoundManager {
     source.connect(filter)
     source.start()
     source.stop(ctx.currentTime + duration)
-    this.tone(260, duration, 'sawtooth', 0.025, 0, 120)
+    // Descending "flick" tone
+    this.tone(300, duration * 0.8, 'sawtooth', 0.04, 0, 100)
   }
 
   hit(runs: number) {
     if (!this.canPlay()) return
     if (runs >= 4) {
-      this.tone(320, 0.1, 'triangle', 0.18, 0, 120)
-      this.tone(620, 0.16, 'sine', 0.12, 0.02)
-      this.tone(880, 0.24, 'sine', 0.08, 0.06)
+      this.tone(340, 0.14, 'triangle', 0.24, 0, 140)
+      this.tone(680, 0.22, 'sine', 0.16, 0.02)
+      this.tone(920, 0.3, 'sine', 0.12, 0.06)
       if (runs === 6) {
-        this.tone(1180, 0.35, 'sine', 0.07, 0.12)
+        this.tone(1280, 0.4, 'sine', 0.1, 0.12)
         this.cheer()
       }
     } else {
-      this.tone(420, 0.06, 'triangle', 0.13, 0, 220)
-      this.tone(180, 0.08, 'sine', 0.09)
+      this.tone(460, 0.08, 'triangle', 0.18, 0, 240)
+      this.tone(200, 0.1, 'sine', 0.12)
     }
   }
 
   wicket() {
     if (!this.canPlay()) return
-    this.tone(180, 0.12, 'square', 0.1, 0, 80)
-    this.tone(110, 0.35, 'sawtooth', 0.08, 0.06, 45)
-    this.noise(0.15, 0.09, 300)?.start()
+    this.tone(170, 0.15, 'square', 0.14, 0, 70)
+    this.tone(95, 0.4, 'sawtooth', 0.11, 0.05, 35)
+    this.noise(0.18, 0.12, 280)?.start()
   }
 
   extras() {
     if (!this.canPlay()) return
-    this.tone(300, 0.15, 'sine', 0.08, 0, 520)
+    this.tone(320, 0.18, 'sine', 0.11, 0, 560)
   }
 
   cheer() {
     if (!this.canPlay()) return
-    this.noise(1.2, 0.07, 1800)?.start()
-    this.tone(523, 0.3, 'sine', 0.06, 0, 659)
-    this.tone(659, 0.38, 'sine', 0.05, 0.08, 784)
-    this.tone(784, 0.42, 'sine', 0.04, 0.16, 1046)
+    this.noise(1.4, 0.1, 1800)?.start()
+    this.tone(523, 0.35, 'sine', 0.08, 0, 659)
+    this.tone(659, 0.42, 'sine', 0.07, 0.08, 784)
+    this.tone(784, 0.48, 'sine', 0.06, 0.16, 1046)
   }
 
   reveal() {
     if (!this.canPlay()) return
-    this.tone(520, 0.2, 'sine', 0.07, 0, 720)
-    this.noise(0.3, 0.035, 2200)?.start()
+    this.tone(540, 0.25, 'sine', 0.1, 0, 760)
+    this.noise(0.35, 0.05, 2200)?.start()
   }
 }
 
 export const sound = new SoundManager()
 
-export function haptic(pattern: number | number[] = 18) {
+export function haptic(pattern: number | number[] = 30) {
   if (typeof navigator === 'undefined' || !('vibrate' in navigator)) return
   if (usePreferences.getState().muted) return
   try {

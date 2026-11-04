@@ -5,6 +5,7 @@ import { EyeOff, Hourglass, Lock, PenLine, Timer } from 'lucide-react'
 import clsx from 'clsx'
 import { usePreferences } from '../../store/preferences'
 import { SPIN } from '../../config/gameConfig'
+import { sound, haptic } from '../../lib/sound'
 import { Pen3D, PenGraphic } from '../../components/board/Pen3D'
 
 type ScreenPhase = 'spinning' | 'aiming'
@@ -72,6 +73,9 @@ export function OpaqueScreen({
     padRef.current?.setPointerCapture(event.pointerId)
     const angle = angleFromEvent(event)
     onAim(angle)
+    // Subtle "touch" feedback when aim begins
+    sound.tone(880, 0.03, 'sine', 0.03)
+    haptic(6)
   }
 
   function move(event: React.PointerEvent<HTMLDivElement>) {
