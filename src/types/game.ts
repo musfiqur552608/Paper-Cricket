@@ -126,6 +126,14 @@ export interface ActiveSpin {
   aimDeadline: string
 }
 
+export interface StopSpinResult {
+  id: string
+  endsAt: string
+  aimDeadline: string
+  finalRotation: number
+  alreadyStopped: boolean
+}
+
 export interface JoinResult {
   roomId: string
   code: string

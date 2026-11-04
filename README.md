@@ -9,8 +9,8 @@ No accounts. No downloads. Just a room code, a bit of mischief, and eleven hand-
 ## What is inside
 
 - **Real-time two-player rooms** with six-character codes (for example `/room/A7KQ2M`).
-- **Hidden, server-side spins** — the final board rotation is generated with Postgres randomness, sealed in a private table, and revealed only after the ball is scored.
-- **The full paper-cricket ritual** — batter holds the pen, bowler spins, an opaque paper screen hides the board, the batter drags the pen blindly, then the paper lifts and the result is stamped.
+- **Bowler-controlled spins** - the bowler sees the board, drags it around for up to 15 seconds, and stops it. The stopped angle is sealed server-side and revealed only after the ball is scored.
+- **The full paper-cricket ritual** - batter holds the pen, the bowler turns the board, an opaque paper screen hides it from the batter, the batter drags the pen blindly, then the paper lifts and the result is stamped.
 - **Complete scoring** — runs, fours, sixes, wickets, extras, free hits, fall of wickets, targets, required run rate, over timelines, and player scorecards.
 - **Lobby rules** — 1–10 overs, 1–11 wickets, one batter per wicket (10 wickets means 10 players a side), server coin toss, optional one-over super over.
 - **Result scorebook** — winner banner, both innings, super-over scorecards, fall of wickets, over-by-over timeline, runs-per-over chart, match stats, PNG/PDF export, native share, and WhatsApp/Telegram/Messenger fallbacks.
@@ -102,14 +102,19 @@ Open **SQL Editor → New query**, paste the complete contents of:
 supabase/migrations/0001_init.sql
 supabase/migrations/0002_wicket_squads.sql
 supabase/migrations/0003_room_cleanup.sql
+supabase/migrations/0004_manual_spin.sql
 ```
 
 and run them in order on a fresh project. On an existing project that already
-has `0001`, run `0002_wicket_squads.sql` and `0003_room_cleanup.sql`.
+has `0001`, run `0002_wicket_squads.sql`, `0003_room_cleanup.sql`, and
+`0004_manual_spin.sql` in that order.
 `0002` makes the wicket setting authoritative for squad size: 10 wickets means
 10 batters a side, and changing the wicket count trims or pads both squads.
 `0003` replaces `leave_room` with a hard delete so a room and all of its related
 rows disappear as soon as a player leaves.
+`0004` gives the bowler manual control of the board. The bowler drags it around
+for up to 15 seconds and `stop_spin` records the resting angle. The batter's
+opaque sheet never receives that angle until the reveal ball is resolved.
 
 Migration `0001` creates:
 
@@ -192,16 +197,13 @@ Defaults: **2 overs, 2 wickets, 2-player squads, server coin toss, super over en
 ### One delivery
 
 1. The batter taps **Hold the pen**. The server records readiness.
-2. The bowler taps **Spin the paper**. The server creates a sealed spin:
-   - a cryptographically random final rotation
-   - a random 2.2–4.8 second duration
-   - an independent public animation seed
-   - a 10-second aim deadline after the spin ends
-3. Both clients see the opaque paper screen. The board is hidden.
-4. When the spin ends, the batter drags the pen around the hidden screen and releases, or taps the slide button. The aim is blind.
-5. The server scores the ball against the sealed rotation and marks the spin resolved.
-6. The paper lifts, the board snaps to the real rotation, the outcome is highlighted, and commentary/sound play.
-7. Both clients auto-advance after 4.3 seconds. The transition creates the next innings, super over, or final result.
+2. The bowler taps **Spin the paper**. The board opens on the bowler's side; the batter keeps the opaque paper screen.
+3. The bowler drags around the board to turn it, then taps **Stop & aim**. If they do nothing, the board stops itself after 15 seconds.
+4. `stop_spin` seals the resting angle. Both clients move to the 10-second aim window; the batter still cannot see the board.
+5. The batter drags the pen around the hidden screen and releases, or taps the slide button. The aim is blind.
+6. The server scores the ball against the sealed rotation and marks the spin resolved.
+7. The paper lifts, the board shows the real rotation to both players, the outcome is highlighted, and commentary/sound play.
+8. Both clients auto-advance after 4.3 seconds. The transition creates the next innings, super over, or final result.
 
 If the batter never submits, the server converts the late aim to its own random direction. If the batter disconnects after the deadline, the bowler can rescue the stalled ball with the **force** path after 1.5 seconds.
 
@@ -247,7 +249,8 @@ The client is never trusted with outcomes.
 - All game mutations go through **`SECURITY DEFINER` RPCs** in `supabase/migrations/0001_init.sql`.
 - Direct table writes are revoked from `anon` and `authenticated`. Only `SELECT` is granted, guarded by RLS.
 - `spins` has RLS enabled, no policies, and no table privileges for client roles. The final rotation cannot be read through the API.
-- The public room state exposes only disposable timing metadata and an animation seed. The board animation is cosmetic; it snaps to the server rotation only on reveal.
+- The public room state exposes only disposable timing metadata. The bowler's stop angle is written through `stop_spin` and is returned only to that bowler; the batter sees it for the first time in the resolved ball.
+- The bowler may turn the board for at most 15 seconds. The client sends the angle shown on the bowler's screen, and the server still validates the turn, phase, and aim before scoring.
 - Every RPC checks auth, membership, room status, phase, and turn. Double submits, stale balls, out-of-turn spins, and third-player joins are rejected server-side.
 - The 6-character room code is an invitation, not an authorization token. Only an active room member can fetch the full snapshot.
 - Scores are computed from the sealed rotation inside the database. A modified client cannot change the result.

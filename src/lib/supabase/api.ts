@@ -4,6 +4,7 @@ import type {
   MatchSnapshot,
   RoomDTO,
   RoomRules,
+  StopSpinResult,
 } from '../../types/game'
 import { normalizeAngle } from '../gameEngine'
 import { AppError, toAppError } from '../errors'
@@ -105,6 +106,14 @@ export async function setBatterReady(roomId: string): Promise<void> {
 
 export async function startSpin(roomId: string): Promise<ActiveSpin> {
   return call<ActiveSpin>('start_spin', { p_room_id: roomId })
+}
+
+export async function stopSpin(roomId: string, rotation: number): Promise<StopSpinResult> {
+  const safeRotation = Number.isFinite(rotation) ? normalizeAngle(rotation) : 0
+  return call<StopSpinResult>('stop_spin', {
+    p_room_id: roomId,
+    p_rotation: Number(safeRotation.toFixed(4)),
+  })
 }
 
 export async function submitAim(roomId: string, aimDegrees: number, force = false): Promise<{ ballId: string }> {

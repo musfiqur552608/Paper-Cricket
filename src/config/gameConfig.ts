@@ -97,9 +97,10 @@ export const DEFAULT_SQUADS = {
 } as const
 
 export const SPIN = {
-  /** Server generates the real duration; these are display fallbacks. */
-  minDurationMs: 2200,
-  maxDurationMs: 4800,
+  /** The bowler may turn the board for this long before it stops itself. */
+  manualSpinMs: 15_000,
+  minDurationMs: 1_000,
+  maxDurationMs: 15_000,
   aimWindowMs: 10_000,
   revealHoldMs: 4300,
   /** The pen travels from its aim position all the way to the rim. */
