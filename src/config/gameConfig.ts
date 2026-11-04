@@ -97,7 +97,10 @@ export const DEFAULT_SQUADS = {
 } as const
 
 export const SPIN = {
-  /** The bowler may turn the board for this long before it stops itself. */
+  /**
+   * Server-side failure fallback if a started spin never receives its stop
+   * request. Normal play stops the moment the bowler releases the board.
+   */
   manualSpinMs: 15_000,
   minDurationMs: 1_000,
   maxDurationMs: 15_000,

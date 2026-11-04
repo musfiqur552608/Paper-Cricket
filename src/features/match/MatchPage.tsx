@@ -14,13 +14,12 @@ import {
   RotateCw,
   ShieldCheck,
   Sparkles,
-  Square,
   Timer,
   WifiOff,
   Zap,
 } from 'lucide-react'
 import clsx from 'clsx'
-import type { MatchSnapshot } from '../../types/game'
+import type { MatchSnapshot, StopSpinResult } from '../../types/game'
 import type { TFunction } from 'i18next'
 import { Board } from '../../components/board/Board'
 import { Logo } from '../../components/ui/Logo'
@@ -77,8 +76,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     aimDeadline: string
   } | null>(null)
   const [manualRotation, setManualRotation] = useState(0)
-  const [spinBusy, setSpinBusy] = useState(false)
-  const [stopBusy, setStopBusy] = useState(false)
+  const [commitBusy, setCommitBusy] = useState(false)
   const [readyBusy, setReadyBusy] = useState(false)
   const [localReady, setLocalReady] = useState(false)
   const [aimAngle, setAimAngle] = useState(() => Math.random() * 360)
@@ -94,7 +92,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
   const advanceRef = useRef<string | null>(null)
   const spinIdRef = useRef<string | null>(null)
   const manualRotationRef = useRef(0)
-  const stopSpinRef = useRef<string | null>(null)
+  const commitRef = useRef(false)
 
   const activeSpin = view.activeSpin ?? localSpin
   const effectiveSpin =
@@ -112,25 +110,21 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
   const screenPhase: 'spinning' | 'aiming' | null =
     phase === 'spinning' || phase === 'aiming' ? phase : null
   const revealedBall = view.phase === 'reveal' ? view.lastBall : null
-  const screenVisible = Boolean(screenPhase && (view.activeSpin || localSpin))
+  const screenVisible = Boolean(screenPhase && effectiveSpin)
+  const isBatter = view.isBatter
+  const isBowler = view.isBowler
+  const batterReady = Boolean(room.batterReadyAt) || localReady
+  const bowlerTurn = Boolean(isBowler && phase === 'ready' && batterReady)
 
   const boardRotation =
     revealedBall != null
       ? revealedBall.boardRotation
-      : screenPhase
+      : screenPhase || bowlerTurn
         ? manualRotation
         : view.lastBall?.boardRotation ?? 0
 
   const aimDeadlineMs = effectiveSpin?.aimDeadline ? Date.parse(effectiveSpin.aimDeadline) : 0
   const aimRemainingMs = aimDeadlineMs ? Math.max(0, aimDeadlineMs - now) : 0
-  const spinRemainingMs = effectiveSpin ? Math.max(0, spinEndsMs - now) : 0
-  const spinProgress =
-    effectiveSpin && screenPhase === 'spinning'
-      ? Math.min(100, Math.max(0, ((now - Date.parse(effectiveSpin.startedAt)) / SPIN.manualSpinMs) * 100))
-      : 0
-  const isBatter = view.isBatter
-  const isBowler = view.isBowler
-  const batterReady = Boolean(room.batterReadyAt) || localReady
   const lastSeenAge = view.opponent ? Math.max(0, now - Date.parse(view.opponent.lastSeenAt)) : 0
   const showOffline =
     room.status === 'live' &&
@@ -153,30 +147,35 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
       : t('match.opponentDropped', { name: view.opponent.name })
     : ''
 
-  // Reset per-spin local state and put the board back where the last ball left it.
+  // Reset per-spin local state. The rotation is not reset here: the bowler may
+  // already have turned the board in the ready phase, and releasing must seal
+  // exactly the angle that was on screen.
   useEffect(() => {
     const id = effectiveSpin?.id ?? null
     if (id && id !== spinIdRef.current) {
       spinIdRef.current = id
       submittedRef.current = null
       rescuedRef.current = null
-      stopSpinRef.current = null
-      setLocalStop(null)
       setAimAngle(Math.random() * 360)
       setSliding(false)
-      const startRotation = view.lastBall?.boardRotation ?? manualRotationRef.current ?? 0
-      manualRotationRef.current = startRotation
-      setManualRotation(startRotation)
     }
     if (!id) {
       submittedRef.current = null
-      stopSpinRef.current = null
       setSliding(false)
-      setLocalStop(null)
     }
-    // The rotation is captured only when a new spin id arrives.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveSpin?.id])
+
+  // Each new ball starts the bowler's board at the angle of the ball before it.
+  useEffect(() => {
+    if (phase !== 'ready') return
+    const startRotation = view.lastBall?.boardRotation
+    if (startRotation == null) return
+    manualRotationRef.current = startRotation
+    setManualRotation(startRotation)
+    // Only the new-ball boundary should move the starting angle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, view.lastBall?.id])
 
   useEffect(() => {
     if (room.phase !== 'ready') setLocalReady(false)
@@ -188,6 +187,10 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
       setLocalSpin(null)
     }
   }, [localSpin, room.currentSpinId, room.phase])
+
+  useEffect(() => {
+    if (phase === 'reveal' || phase === 'finished') setLocalSpin(null)
+  }, [phase])
 
   useEffect(() => {
     if (!screenPhase || !effectiveSpin) return
@@ -260,55 +263,58 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     [effectiveSpin, isBatter, refresh, room.id, t],
   )
 
-  const stopSpinNow = useCallback(
-    async (auto = false) => {
-      if (!isBowler || !effectiveSpin || stopBusy) return
-      if (stopSpinRef.current === effectiveSpin.id) return
-      stopSpinRef.current = effectiveSpin.id
-      setStopBusy(true)
-      try {
-        const result = await stopSpin(room.id, manualRotationRef.current)
-        setLocalStop({
-          spinId: effectiveSpin.id,
-          endsAt: result.endsAt,
-          aimDeadline: result.aimDeadline,
-        })
-        if (!auto) haptic(18)
-        await refresh()
-      } catch (caught) {
-        const appError = toAppError(caught)
-        // The manual button may retry a transient failure. The auto-stop keeps
-        // its guard, because the batter can still submit at the hard deadline.
-        if (!auto) stopSpinRef.current = null
-        if (!['WRONG_PHASE', 'STALE_BALL', 'SPIN_NOT_FINISHED'].includes(appError.code)) {
-          notify.error(t(errorKey(appError.code)))
+  // Releasing the board is the stop action. Start the sealed spin and stop it
+  // with the angle currently on the bowler's screen in one quick pair of RPCs.
+  // The two calls keep the existing server contract and need no extra table or
+  // migration; the stop response opens the batter's aim window immediately.
+  const commitSpin = useCallback(async () => {
+    if (!isBowler || phase !== 'ready' || !batterReady || commitRef.current) return
+    commitRef.current = true
+    setCommitBusy(true)
+    const rotation = manualRotationRef.current
+    try {
+      const spin = await startSpin(room.id)
+      setLocalSpin(spin)
+      let stopped: StopSpinResult | null = null
+      let lastError: unknown = null
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          stopped = await stopSpin(room.id, rotation)
+          break
+        } catch (caught) {
+          lastError = caught
+          if (attempt < 2) await sleep(350)
         }
-        await refresh()
-      } finally {
-        setStopBusy(false)
       }
-    },
-    [effectiveSpin, isBowler, refresh, room.id, stopBusy, t],
-  )
+      if (!stopped) throw lastError ?? new Error('STOP_FAILED')
+      setLocalStop({
+        spinId: spin.id,
+        endsAt: stopped.endsAt,
+        aimDeadline: stopped.aimDeadline,
+      })
+      haptic(18)
+      await refresh()
+    } catch (caught) {
+      notify.error(t(errorKey(toAppError(caught).code)))
+      await refresh()
+    } finally {
+      commitRef.current = false
+      setCommitBusy(false)
+    }
+  }, [batterReady, isBowler, phase, refresh, room.id, t])
 
-  // The hard 15-second limit. Stop a fraction early so the stop RPC wins the
-  // race against a batter submitting at the server deadline.
+  // Realtime room updates are the fast path, but the batter must not wait for
+  // the slower fallback while the bowler releases the board. Poll quickly from
+  // the moment the pen is down until the aim surface appears.
   useEffect(() => {
-    if (!isBowler || screenPhase !== 'spinning' || !effectiveSpin) return
-    if (spinRemainingMs > 250) return
-    if (stopSpinRef.current === effectiveSpin.id) return
-    void stopSpinNow(true)
-  }, [effectiveSpin, isBowler, screenPhase, spinRemainingMs, stopSpinNow])
-
-  // Realtime room updates are the fast path, but the batter must not stay
-  // covered if the bowler's stop RPC arrives while the socket is asleep.
-  useEffect(() => {
-    if (!isBatter || screenPhase !== 'spinning') return
+    if (!isBatter) return
+    const waitingForRelease = phase === 'ready' && batterReady
+    if (!waitingForRelease && screenPhase !== 'spinning') return
     const timer = window.setInterval(() => {
       void refresh()
     }, 1500)
     return () => window.clearInterval(timer)
-  }, [isBatter, refresh, screenPhase])
+  }, [batterReady, isBatter, phase, refresh, screenPhase])
 
   // Batter timeout: send a random-ish angle; the server converts late aim to its
   // own secure random direction. Bowler rescues a disconnected batter after 1.5s.
@@ -395,21 +401,6 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
       await refresh()
     } finally {
       setReadyBusy(false)
-    }
-  }
-
-  async function spinNow() {
-    if (!isBowler || spinBusy || !room.batterReadyAt) return
-    setSpinBusy(true)
-    try {
-      const spin = await startSpin(room.id)
-      setLocalSpin(spin)
-      await refresh()
-    } catch (caught) {
-      notify.error(t(errorKey(toAppError(caught).code)))
-      await refresh()
-    } finally {
-      setSpinBusy(false)
     }
   }
 
@@ -530,16 +521,15 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
                   revealed={Boolean(revealedBall)}
                   compact
                 />
-                {isBowler && screenPhase === 'spinning' ? (
+                {isBowler && phase === 'ready' && batterReady && !commitBusy ? (
                   <BoardSpinControl
                     active
                     rotation={manualRotation}
-                    remainingMs={spinRemainingMs}
                     onRotation={(value) => {
                       manualRotationRef.current = value
                       setManualRotation(value)
                     }}
-                    onStop={() => void stopSpinNow()}
+                    onStop={() => void commitSpin()}
                   />
                 ) : null}
               </div>
@@ -548,10 +538,19 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
                 <HoldPen ready={batterReady} disabled={!isBatter || readyBusy} onReady={() => void markPenReady()} />
               ) : null}
 
-              {phase === 'ready' && !isBatter && view.opponent ? (
+              {phase === 'ready' && isBowler && !batterReady && view.opponent ? (
                 <div className="pointer-events-none absolute inset-x-0 bottom-[5%] z-20 flex justify-center">
                   <span className="rounded-full border border-ink/15 bg-paper-50/90 px-3 py-1.5 text-[10px] font-semibold text-slate-500 shadow-sm backdrop-blur">
-                    {batterReady ? t('match.spinTitle') : t('match.waitingForBatter')}
+                    {t('match.waitingForBatter')}
+                  </span>
+                </div>
+              ) : null}
+
+              {isBowler && phase === 'ready' && batterReady && commitBusy ? (
+                <div className="pointer-events-none absolute inset-x-0 bottom-[5%] z-20 flex justify-center">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-paper-50/90 px-3 py-1.5 text-[10px] font-semibold text-slate-500 shadow-sm backdrop-blur">
+                    <Loader2 size={11} className="animate-spin" />
+                    {t('match.spinStopping')}
                   </span>
                 </div>
               ) : null}
@@ -569,11 +568,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
                   remainingMs={aimRemainingMs}
                   spinDurationMs={SPIN.manualSpinMs}
                   reducedMotion={reducedPref}
-                  spinningText={
-                    screenPhase === 'spinning'
-                      ? t('match.spinWatchingTimer', { seconds: Math.ceil(spinRemainingMs / 1000) })
-                      : undefined
-                  }
+                  spinningText={screenPhase === 'spinning' ? t('match.spinStoppingWatching') : undefined}
                 />
               ) : null}
 
@@ -642,59 +637,28 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
                     isBatter={isBatter}
                     batterReady={batterReady}
                     readyBusy={readyBusy}
-                    spinBusy={spinBusy}
-                    canSpin={Boolean(isBowler && room.batterReadyAt && !spinBusy)}
-                    onSpin={() => void spinNow()}
+                    committing={commitBusy}
                     striker={view.strikerName}
                   />
                 ) : null}
 
                 {screenPhase === 'spinning' ? (
-                  <div>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <span className={clsx('grid h-11 w-11 shrink-0 place-items-center rounded-full', isBowler ? 'bg-ink/10 text-ink' : 'bg-slate-100 text-slate-400')}>
-                          <RotateCw size={20} className={isBowler && !reducedPref ? 'animate-spin' : ''} />
-                        </span>
-                        <div>
-                          <p className="font-hand text-[25px] font-bold leading-none text-ink-deep">
-                            {isBowler ? t('match.spinBoardTitle') : t('match.spinWatching')}
-                          </p>
-                          <p className="mt-1 max-w-[330px] text-[11.5px] leading-relaxed text-slate-500">
-                            {isBowler ? t('match.spinBoardBody') : t('match.spinWatchingBody')}
-                          </p>
-                        </div>
-                      </div>
-                      {isBowler ? (
-                        <div className="flex shrink-0 flex-col items-center gap-1">
-                          <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-ink/25 font-mono text-sm font-bold text-ink">
-                            {Math.ceil(spinRemainingMs / 1000)}
-                          </span>
-                          <span className="text-[8.5px] font-bold uppercase tracking-wide text-slate-400">{t('common.seconds')}</span>
-                          <button
-                            type="button"
-                            className="btn-pencil btn-sm mt-0.5 whitespace-nowrap"
-                            onClick={() => void stopSpinNow()}
-                            disabled={stopBusy}
-                          >
-                            {stopBusy ? <Loader2 size={12} className="animate-spin" /> : <Square size={12} />}
-                            {t('match.stopAndAim')}
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="flex items-center gap-1 rounded-full bg-ink/[0.055] px-2.5 py-1.5 text-[10px] font-medium text-slate-500">
-                          <Timer size={12} /> {t('match.secondsLeft', { seconds: Math.ceil(spinRemainingMs / 1000) })}
-                        </span>
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={clsx(
+                        'grid h-11 w-11 shrink-0 place-items-center rounded-full',
+                        isBowler ? 'bg-ink/10 text-ink' : 'bg-slate-100 text-slate-400',
                       )}
-                    </div>
-                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink/10">
-                      <div className="h-full rounded-full bg-ink transition-[width] duration-200" style={{ width: `${spinProgress}%` }} />
-                    </div>
-                    <div className="mt-2 flex items-start justify-between gap-3">
-                      <p className="text-[10.5px] leading-relaxed text-slate-400">
-                        {isBowler ? t('match.spinBoardHint') : t('match.handsOff')}
+                    >
+                      <Loader2 size={20} className="animate-spin" />
+                    </span>
+                    <div>
+                      <p className="font-hand text-[25px] font-bold leading-none text-ink-deep">
+                        {isBowler ? t('match.spinStopping') : t('match.spinWatching')}
                       </p>
-                      <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide text-slate-400">{t('match.spinMax')}</span>
+                      <p className="mt-1 max-w-[330px] text-[11.5px] leading-relaxed text-slate-500">
+                        {isBowler ? t('match.spinBoardHint') : t('match.spinWatchingBody')}
+                      </p>
                     </div>
                   </div>
                 ) : null}
@@ -859,17 +823,13 @@ function ReadyControls({
   isBatter,
   batterReady,
   readyBusy,
-  spinBusy,
-  canSpin,
-  onSpin,
+  committing,
   striker,
 }: {
   isBatter: boolean
   batterReady: boolean
   readyBusy: boolean
-  spinBusy: boolean
-  canSpin: boolean
-  onSpin: () => void
+  committing: boolean
   striker: string | null
 }) {
   const { t } = useTranslation()
@@ -902,34 +862,30 @@ function ReadyControls({
   }
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-start gap-3">
-        <span className={clsx('grid h-11 w-11 shrink-0 place-items-center rounded-full', canSpin ? 'bg-ink/10 text-ink' : 'bg-slate-100 text-slate-400')}>
-          {batterReady ? <RotateCw size={20} /> : <Hourglass size={19} />}
-        </span>
-        <div>
-          <p className="font-hand text-[26px] font-bold leading-none text-ink-deep">
-            {batterReady ? t('match.spinTitle') : t('match.waitingForBatter')}
-          </p>
-          <p className="mt-1 max-w-[330px] text-[11.5px] leading-relaxed text-slate-500">
-            {batterReady ? t('match.spinBody') : t('match.penDownBody')}
-          </p>
-          {batterReady && striker ? (
-            <p className="mt-1 text-[9.5px] text-slate-400">
-              {t('match.batter')}: <span className="font-semibold text-slate-600">{striker}</span>
-            </p>
-          ) : null}
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={onSpin}
-        disabled={!canSpin}
-        className="btn-pencil btn-lg shrink-0 sm:min-w-[140px]"
+    <div className="flex items-start gap-3">
+      <span
+        className={clsx(
+          'grid h-11 w-11 shrink-0 place-items-center rounded-full',
+          batterReady || committing ? 'bg-ink/10 text-ink' : 'bg-slate-100 text-slate-400',
+        )}
       >
-        {spinBusy ? <Loader2 size={18} className="animate-spin" /> : <RotateCw size={18} />}
-        {spinBusy ? t('match.spinning') : t('match.spinButton')}
-      </button>
+        {committing ? <Loader2 size={20} className="animate-spin" /> : batterReady ? <RotateCw size={20} /> : <Hourglass size={19} />}
+      </span>
+      <div>
+        <p className="font-hand text-[26px] font-bold leading-none text-ink-deep">
+          {committing ? t('match.spinStopping') : batterReady ? t('match.spinTitle') : t('match.waitingForBatter')}
+        </p>
+        <p className="mt-1 max-w-[380px] text-[11.5px] leading-relaxed text-slate-500">
+          {committing ? t('match.spinBoardHint') : batterReady ? t('match.spinBody') : t('match.penDownBody')}
+        </p>
+        {batterReady && striker && !committing ? (
+          <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-ink/[0.055] px-2 py-0.5 text-[10px] text-slate-500">
+            <RotateCw size={11} /> {t('match.dragToSpin')}
+            <span className="text-slate-300">·</span>
+            {t('match.batter')}: <span className="font-semibold text-slate-600">{striker}</span>
+          </p>
+        ) : null}
+      </div>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { RotateCw, Timer } from 'lucide-react'
+import { PenLine, RotateCw } from 'lucide-react'
 import clsx from 'clsx'
 
 function pointerAngle(element: HTMLElement, clientX: number, clientY: number): number {
@@ -18,7 +18,6 @@ function shortestDelta(from: number, to: number): number {
 interface BoardSpinControlProps {
   active: boolean
   rotation: number
-  remainingMs: number
   onRotation: (rotation: number) => void
   onStop: () => void
 }
@@ -26,12 +25,12 @@ interface BoardSpinControlProps {
 /**
  * The bowler's transparent drag surface. The board stays fully visible; only
  * this dashed ring and the two small labels sit above it. Moving around the
- * centre turns the board 1:1 with the pointer.
+ * centre turns the board 1:1 with the pointer. Letting go commits the angle and
+ * immediately hands the pen to the batter: there is no start or stop button.
  */
 export function BoardSpinControl({
   active,
   rotation,
-  remainingMs,
   onRotation,
   onStop,
 }: BoardSpinControlProps) {
@@ -40,6 +39,7 @@ export function BoardSpinControl({
   const rotationRef = useRef(rotation)
   const lastAngleRef = useRef<number | null>(null)
   const draggingRef = useRef(false)
+  const turnedRef = useRef(false)
   const [dragging, setDragging] = useState(false)
   const [hasTurned, setHasTurned] = useState(false)
 
@@ -51,6 +51,7 @@ export function BoardSpinControl({
     if (active) return
     draggingRef.current = false
     lastAngleRef.current = null
+    turnedRef.current = false
     setDragging(false)
     setHasTurned(false)
   }, [active])
@@ -79,6 +80,7 @@ export function BoardSpinControl({
     if (Math.abs(delta) < 0.05) return
     lastAngleRef.current = next
     rotationRef.current += delta
+    turnedRef.current = true
     if (!hasTurned) setHasTurned(true)
     onRotation(rotationRef.current)
   }
@@ -92,6 +94,9 @@ export function BoardSpinControl({
     if (pad?.hasPointerCapture(event.pointerId)) {
       pad.releasePointerCapture(event.pointerId)
     }
+    // A tap with no turn should not lock in a spin. Once the bowler has turned
+    // the board, releasing is the stop action.
+    if (turnedRef.current) onStop()
   }
 
   function cancel(event: React.PointerEvent<HTMLDivElement>) {
@@ -110,16 +115,15 @@ export function BoardSpinControl({
       event.preventDefault()
       const delta = event.key === 'ArrowLeft' ? -8 : 8
       rotationRef.current += delta
+      turnedRef.current = true
       setHasTurned(true)
       onRotation(rotationRef.current)
     }
-    if (event.key === 'Enter' || event.key === ' ') {
+    if ((event.key === 'Enter' || event.key === ' ') && turnedRef.current) {
       event.preventDefault()
       onStop()
     }
   }
-
-  const seconds = Math.max(0, Math.ceil(remainingMs / 1000))
 
   return (
     <AnimatePresence>
@@ -170,8 +174,8 @@ export function BoardSpinControl({
           </div>
 
           <div className="pointer-events-none absolute bottom-[2.5%] left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-ink/15 bg-paper-50/90 px-3 py-1.5 text-[10px] font-bold text-ink/60 shadow-sm backdrop-blur">
-            <Timer size={11} />
-            {t('match.spinAutoStop', { seconds })}
+            <PenLine size={11} />
+            {t('match.spinBoardHint')}
           </div>
         </motion.div>
       ) : null}

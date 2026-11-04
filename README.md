@@ -9,7 +9,7 @@ No accounts. No downloads. Just a room code, a bit of mischief, and eleven hand-
 ## What is inside
 
 - **Real-time two-player rooms** with six-character codes (for example `/room/A7KQ2M`).
-- **Bowler-controlled spins** - the bowler sees the board, drags it around for up to 15 seconds, and stops it. The stopped angle is sealed server-side and revealed only after the ball is scored.
+- **Bowler-controlled spins** - the bowler sees the board, drags it around, and releases to stop. The stopped angle is sealed server-side and revealed only after the ball is scored.
 - **The full paper-cricket ritual** - batter holds the pen, the bowler turns the board, an opaque paper screen hides it from the batter, the batter drags the pen blindly, then the paper lifts and the result is stamped.
 - **Complete scoring** — runs, fours, sixes, wickets, extras, free hits, fall of wickets, targets, required run rate, over timelines, and player scorecards.
 - **Lobby rules** — 1–10 overs, 1–11 wickets, one batter per wicket (10 wickets means 10 players a side), server coin toss, optional one-over super over.
@@ -113,7 +113,7 @@ has `0001`, run `0002_wicket_squads.sql`, `0003_room_cleanup.sql`, and
 `0003` replaces `leave_room` with a hard delete so a room and all of its related
 rows disappear as soon as a player leaves.
 `0004` gives the bowler manual control of the board. The bowler drags it around
-for up to 15 seconds and `stop_spin` records the resting angle. The batter's
+and `stop_spin` records the resting angle the moment they release. The batter's
 opaque sheet never receives that angle until the reveal ball is resolved.
 
 Migration `0001` creates:
@@ -196,10 +196,10 @@ Defaults: **2 overs, 2 wickets, 2-player squads, server coin toss, super over en
 
 ### One delivery
 
-1. The batter taps **Hold the pen**. The server records readiness.
-2. The bowler taps **Spin the paper**. The board opens on the bowler's side; the batter keeps the opaque paper screen.
-3. The bowler drags around the board to turn it, then taps **Stop & aim**. If they do nothing, the board stops itself after 15 seconds.
-4. `stop_spin` seals the resting angle. Both clients move to the 10-second aim window; the batter still cannot see the board.
+1. The batter presses and holds the pen. The server records readiness.
+2. The board becomes draggable on the bowler's side immediately. There is no SPIN button; the batter keeps the nib down and looks away.
+3. The bowler turns the board and releases. The release starts and immediately stops the server spin with the angle on screen. There is no **Stop & aim** button and no 15-second wait.
+4. `stop_spin` seals the resting angle and opens the 10-second aim window at once. The batter's opaque cover drops; they still cannot see the board.
 5. The batter drags the pen around the hidden screen and releases, or taps the slide button. The aim is blind.
 6. The server scores the ball against the sealed rotation and marks the spin resolved.
 7. The paper lifts, the board shows the real rotation to both players, the outcome is highlighted, and commentary/sound play.
@@ -250,7 +250,7 @@ The client is never trusted with outcomes.
 - Direct table writes are revoked from `anon` and `authenticated`. Only `SELECT` is granted, guarded by RLS.
 - `spins` has RLS enabled, no policies, and no table privileges for client roles. The final rotation cannot be read through the API.
 - The public room state exposes only disposable timing metadata. The bowler's stop angle is written through `stop_spin` and is returned only to that bowler; the batter sees it for the first time in the resolved ball.
-- The bowler may turn the board for at most 15 seconds. The client sends the angle shown on the bowler's screen, and the server still validates the turn, phase, and aim before scoring.
+- The bowler's release stops the board immediately. The client sends the angle shown on the bowler's screen, and the server still validates the turn, phase, and aim before scoring. A 15-second server fallback covers a failed stop request, but it is not part of normal play.
 - Every RPC checks auth, membership, room status, phase, and turn. Double submits, stale balls, out-of-turn spins, and third-player joins are rejected server-side.
 - The 6-character room code is an invitation, not an authorization token. Only an active room member can fetch the full snapshot.
 - Scores are computed from the sealed rotation inside the database. A modified client cannot change the result.
@@ -301,7 +301,7 @@ Use two browsers or one normal + one private window:
 
 1. Create a room with a squad, set 1 over / 2 wickets, invite the second player.
 2. Confirm the third player gets **Room full**.
-3. Start the match, hold the pen, spin, wait for the paper to lift, and drag the pen.
+3. Start the match, hold the pen, drag and release the board, then drag the pen after the aim surface appears.
 4. Confirm the result highlight matches the stamped outcome, sound, commentary, and score.
 5. Force a no-ball and check the free-hit state; take a wicket on the free hit and confirm it is saved.
 6. Let the aim timer expire and confirm a ball is still scored.
