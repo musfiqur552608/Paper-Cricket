@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { PenLine, RotateCw } from 'lucide-react'
 import clsx from 'clsx'
+import { sound } from '../../lib/sound'
 
 function pointerAngle(element: HTMLElement, clientX: number, clientY: number): number {
   const rect = element.getBoundingClientRect()
@@ -38,6 +39,7 @@ export function BoardSpinControl({
   const padRef = useRef<HTMLDivElement>(null)
   const rotationRef = useRef(rotation)
   const lastAngleRef = useRef<number | null>(null)
+  const lastMoveTimeRef = useRef<number>(0)
   const draggingRef = useRef(false)
   const turnedRef = useRef(false)
   const [dragging, setDragging] = useState(false)
@@ -72,13 +74,20 @@ export function BoardSpinControl({
     if (!active || !draggingRef.current || !padRef.current) return
     const next = pointerAngle(padRef.current, event.clientX, event.clientY)
     const last = lastAngleRef.current
+    const now = performance.now()
     if (last == null) {
       lastAngleRef.current = next
+      lastMoveTimeRef.current = now
       return
     }
     const delta = shortestDelta(last, next)
     if (Math.abs(delta) < 0.05) return
+    const dt = Math.max(1, now - lastMoveTimeRef.current)
+    const degPerSec = (Math.abs(delta) / dt) * 1000
+    // Play speed-reactive spin sound
+    sound.spinBySpeed(degPerSec)
     lastAngleRef.current = next
+    lastMoveTimeRef.current = now
     rotationRef.current += delta
     turnedRef.current = true
     if (!hasTurned) setHasTurned(true)

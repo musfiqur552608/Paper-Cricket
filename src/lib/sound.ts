@@ -79,12 +79,40 @@ class SoundManager {
     this.tone(640, 0.06, 'triangle', 0.12)
   }
 
+  /** Spin sound that reacts to drag speed (deg/sec). Call repeatedly while dragging. */
+  spinBySpeed(degPerSec: number) {
+    if (!this.canPlay()) return
+    const ctx = this.context()
+    if (!ctx) return
+    // Clamp speed to reasonable range
+    const speed = Math.max(0, Math.min(degPerSec, 720))
+    const norm = speed / 720 // 0..1
+    // Whoosh layer: filter opens with speed
+    const dur = 0.12
+    const source = this.noise(dur, 0.08 + norm * 0.18, 800)
+    if (!source) return
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'lowpass'
+    filter.frequency.setValueAtTime(500 + norm * 2500, ctx.currentTime)
+    filter.frequency.linearRampToValueAtTime(400 + norm * 800, ctx.currentTime + dur)
+    filter.Q.value = 1.2 + norm * 2
+    source.connect(filter)
+    source.start()
+    source.stop(ctx.currentTime + dur)
+    // Tick layer: faster ticks at higher speed
+    const tickRate = 0.04 + norm * 0.18 // 40ms..220ms between ticks
+    // Only fire a tick occasionally to avoid flooding
+    if (Math.random() < tickRate * 4) {
+      this.tone(1000 + norm * 800, 0.02, 'sine', 0.02 + norm * 0.03)
+    }
+  }
+
+  /** Legacy full-duration spin (used for auto-stop fallback). */
   spin(durationMs = 3000) {
     if (!this.canPlay()) return
     const ctx = this.context()
     if (!ctx) return
     const duration = Math.max(0.8, durationMs / 1000)
-    // Wind-up whoosh
     const source = this.noise(duration, 0.18, 900)
     if (!source) return
     const filter = ctx.createBiquadFilter()
@@ -95,7 +123,6 @@ class SoundManager {
     source.connect(filter)
     source.start()
     source.stop(ctx.currentTime + duration)
-    // Soft rhythmic "tick-tick" as the board spins
     for (let i = 0; i < duration; i += 0.25) {
       this.tone(1200, 0.03, 'sine', 0.03, i)
     }
@@ -124,27 +151,84 @@ class SoundManager {
     this.tone(300, duration * 0.8, 'sawtooth', 0.04, 0, 100)
   }
 
-  hit(runs: number) {
+  /** Score-specific hit sounds. */
+  hitByScore(runs: number) {
     if (!this.canPlay()) return
-    if (runs >= 4) {
-      this.tone(340, 0.14, 'triangle', 0.24, 0, 140)
-      this.tone(680, 0.22, 'sine', 0.16, 0.02)
-      this.tone(920, 0.3, 'sine', 0.12, 0.06)
-      if (runs === 6) {
-        this.tone(1280, 0.4, 'sine', 0.1, 0.12)
+    switch (runs) {
+      case 1: // Sharp single
+        this.tone(520, 0.07, 'triangle', 0.18, 0, 280)
+        this.tone(260, 0.05, 'sine', 0.08)
+        break
+      case 2: // Double bounce
+        this.tone(480, 0.08, 'triangle', 0.2, 0, 260)
+        this.tone(220, 0.06, 'sine', 0.1)
+        this.tone(620, 0.04, 'sine', 0.06, 0.04)
+        break
+      case 3: // Triple - rising chord
+        this.tone(440, 0.09, 'triangle', 0.22, 0, 240)
+        this.tone(550, 0.07, 'sine', 0.1, 0.01)
+        this.tone(660, 0.05, 'sine', 0.08, 0.03)
+        break
+      case 4: // Boundary - bright major chord
+        this.tone(380, 0.12, 'triangle', 0.26, 0, 180)
+        this.tone(570, 0.16, 'sine', 0.18, 0.01)
+        this.tone(760, 0.22, 'sine', 0.14, 0.03)
+        this.tone(1040, 0.28, 'sine', 0.08, 0.06)
+        break
+      case 6: // Six - big chord + cheer
+        this.tone(340, 0.14, 'triangle', 0.3, 0, 140)
+        this.tone(510, 0.22, 'sine', 0.22, 0.01)
+        this.tone(680, 0.3, 'sine', 0.18, 0.03)
+        this.tone(920, 0.38, 'sine', 0.14, 0.06)
+        this.tone(1280, 0.45, 'sine', 0.1, 0.12)
         this.cheer()
-      }
-    } else {
-      this.tone(460, 0.08, 'triangle', 0.18, 0, 240)
-      this.tone(200, 0.1, 'sine', 0.12)
+        break
+      default: // Extras / fallbacks
+        this.tone(320, 0.18, 'sine', 0.11, 0, 560)
     }
   }
 
-  wicket() {
+  /** Legacy hit(runs) kept for compatibility. */
+  hit(runs: number) {
+    this.hitByScore(runs)
+  }
+
+  /** Wicket-specific sounds. */
+  wicketByType(kind: 'caught' | 'bowled' | 'lbw' | 'runout' | 'stumped') {
     if (!this.canPlay()) return
-    this.tone(170, 0.15, 'square', 0.14, 0, 70)
-    this.tone(95, 0.4, 'sawtooth', 0.11, 0.05, 35)
-    this.noise(0.18, 0.12, 280)?.start()
+    switch (kind) {
+      case 'caught': // Clean snap + hang
+        this.tone(180, 0.12, 'square', 0.16, 0, 80)
+        this.tone(720, 0.35, 'sine', 0.12, 0.02, 440)
+        this.noise(0.1, 0.08, 4000)?.start()
+        break
+      case 'bowled': // Heavy thud + wood rattle
+        this.tone(110, 0.25, 'sawtooth', 0.22, 0, 55)
+        this.tone(180, 0.15, 'triangle', 0.18, 0.02, 90)
+        this.noise(0.2, 0.15, 200)?.start()
+        this.tone(800, 0.06, 'square', 0.08, 0.03) // stumps hit
+        break
+      case 'lbw': // Low ominous pad
+        this.tone(95, 0.45, 'sawtooth', 0.14, 0, 40)
+        this.tone(160, 0.3, 'triangle', 0.1, 0.05, 80)
+        this.noise(0.3, 0.07, 150)?.start()
+        break
+      case 'runout': // Sharp whip + impact
+        this.tone(220, 0.08, 'square', 0.2, 0, 110)
+        this.tone(880, 0.05, 'sawtooth', 0.12, 0, 440)
+        this.noise(0.12, 0.1, 3000)?.start()
+        break
+      case 'stumped': // Quick snap + pop
+        this.tone(160, 0.1, 'square', 0.18, 0, 70)
+        this.tone(920, 0.04, 'sine', 0.1, 0, 1200)
+        this.noise(0.08, 0.07, 5000)?.start()
+        break
+    }
+  }
+
+  /** Legacy wicket() kept for compatibility. */
+  wicket() {
+    this.wicketByType('bowled')
   }
 
   extras() {

@@ -207,13 +207,21 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     sound.reveal()
     const tick = window.setTimeout(() => {
       if (revealedBall.isWicket) {
-        sound.wicket()
+        // Map outcome code to wicket type
+        const wicketType = (() => {
+          switch (revealedBall.outcome) {
+            case 'CO': return 'caught'
+            case 'BO': return 'bowled'
+            case 'LBW': return 'lbw'
+            case 'RO': return 'runout'
+            default: return 'bowled'
+          }
+        })()
+        sound.wicketByType(wicketType)
         haptic([35, 55, 120])
-      } else if (revealedBall.outcome === '4' || revealedBall.outcome === '6') {
-        sound.hit(Number(revealedBall.outcome))
-        haptic([20, 35, 20])
       } else {
-        sound.hit(revealedBall.runs)
+        sound.hitByScore(revealedBall.runs)
+        haptic([20, 35, 20])
       }
     }, 420)
     return () => window.clearTimeout(tick)
