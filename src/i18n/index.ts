@@ -374,6 +374,19 @@ const en = {
     secondsLeft: '{{seconds}}s',
     secondsShort: 's',
   },
+  theme: {
+    picker: {
+      title: 'Paper & pen',
+      pickYourLook: 'Make it your own',
+      paper: 'Paper theme',
+      paperSub: 'Choose the sheet the match is played on.',
+      pen: 'Pen style',
+      penSub: 'Pick the pen that spins and aims.',
+      preview: 'Preview',
+      saveNote: 'Saved for this seat only.',
+      saved: 'Saved!',
+    },
+  },
   result: {
     winnerTitle: '{{team}} wins!',
     winnerSuffix: 'wins!',
@@ -1004,6 +1017,19 @@ const bn: typeof en = {
     safeShort: 'সে',
     secondsLeft: '{{seconds}} সেকেন্ড',
     secondsShort: 'সে',
+  },
+  theme: {
+    picker: {
+      title: 'কাগজ ও কলম',
+      pickYourLook: 'নিজের মতো সাজাও',
+      paper: 'কাগজের থিম',
+      paperSub: 'ম্যাচ যে কাগজে হবে সেটা বেছে নাও।',
+      pen: 'কলমের স্টাইল',
+      penSub: 'যে কলমে ঘোরাবে আর লক্ষ্য করবে সেটা বেছে নাও।',
+      preview: 'প্রিভিউ',
+      saveNote: 'তোমার পছন্দ শুধু তোমার সিটের জন্য সেভ হবে।',
+      saved: 'সেভ হয়েছে!',
+    },
   },
   result: {
     winnerTitle: '{{team}} জয়ী!',

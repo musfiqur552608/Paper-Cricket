@@ -11,6 +11,7 @@ import {
   Copy,
   Crown,
   LogOut,
+  Palette,
   Pencil,
   Play,
   Settings2,
@@ -26,6 +27,7 @@ import type { MatchSnapshot, RoomRules } from '../../types/game'
 import { AppHeader } from '../../components/ui/AppHeader'
 import { Dialog } from '../../components/ui/Dialog'
 import { LeaveConfirmDialog } from '../../components/ui/LeaveConfirmDialog'
+import { ThemePenPicker } from '../../components/ui/ThemePenPicker'
 import { RuleStepper } from '../../components/ui/RuleStepper'
 import { CoinToss, type TossWinner } from '../../components/ui/CoinToss'
 import { PlayerAvatar } from '../../components/game/PlayerAvatar'
@@ -35,6 +37,7 @@ import { setPlayerReady, startMatch, updatePlayerProfile, updateRoomSettings } f
 import { errorKey, toAppError } from '../../lib/errors'
 import { GAME_DEFAULTS, makeSquadNames } from '../../config/gameConfig'
 import { notify } from '../../store/toast'
+import { useThemePrefs } from '../../store/preferences'
 import { copyText } from '../../lib/share'
 import { sound } from '../../lib/sound'
 
@@ -63,8 +66,11 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
   const me = activePlayers.find((player) => player.userId === userId) ?? players.find((player) => player.userId === userId)
   const isHost = room.hostUserId === userId
   const emptySlot = activePlayers.length < 2
+  const setThemePrefs = useThemePrefs((state) => state.setThemePrefs)
+  const themeConfigured = useThemePrefs((state) => state.configured)
 
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [styleOpen, setStyleOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
   const [profileName, setProfileName] = useState(me?.name ?? '')
@@ -90,6 +96,27 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
   const lastBatFirstRef = useRef(room.batFirst)
   const tossResultTimerRef = useRef<number | null>(null)
   const tossStartTimerRef = useRef<number | null>(null)
+  const themePromptedRef = useRef(false)
+  const themeAdoptedRef = useRef(false)
+
+  // Adopt a previously saved server-side look once, then let this browser's
+  // local choice lead. This also lets a returning player keep their style on
+  // a new device after the server has stored it.
+  useEffect(() => {
+    if (!me || themeAdoptedRef.current) return
+    if (!me.paperThemeId) return
+    themeAdoptedRef.current = true
+    setThemePrefs({ paperThemeId: me.paperThemeId, penStyleId: me.penStyleId ?? 'clear' })
+  }, [me, setThemePrefs])
+
+  // Prompt each seat to pick a paper and pen the first time they enter a room.
+  // Host and guest both get this independently; the defaults are preselected.
+  useEffect(() => {
+    if (!me || themePromptedRef.current || themeConfigured) return
+    if (me.paperThemeId) return
+    themePromptedRef.current = true
+    setStyleOpen(true)
+  }, [me, themeConfigured])
 
   useEffect(() => {
     setRules({ overs: room.overs, wickets: room.wickets, batFirst: 'toss', superOver: room.superOver })
@@ -322,6 +349,9 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
             <p className="mt-1 text-[13px] text-slate-500">{t('lobby.subtitle')}</p>
           </div>
           <div className="flex items-center gap-2">
+            <button type="button" className="btn-paper btn-sm" onClick={() => setStyleOpen(true)}>
+              <Palette size={14} /> <span className="hidden sm:inline">{t('theme.picker.title')}</span>
+            </button>
             <button type="button" className="btn-paper btn-sm" onClick={() => setInviteOpen(true)}>
               <Share2 size={14} /> {t('lobby.invite')}
             </button>
@@ -630,6 +660,15 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
           <ShieldCheck size={12} /> {t('match.freezeNote')}
         </p>
       </main>
+
+      <ThemePenPicker
+        open={styleOpen}
+        onClose={() => setStyleOpen(false)}
+        onSaved={() => void refresh()}
+        roomId={room.id}
+        currentTheme={me.paperThemeId ?? null}
+        currentPen={me.penStyleId ?? null}
+      />
 
       <InviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} code={room.code} />
 

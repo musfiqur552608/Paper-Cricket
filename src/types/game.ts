@@ -33,6 +33,50 @@ export type MatchPhase = 'lobby' | 'ready' | 'spinning' | 'aiming' | 'reveal' | 
 
 export type PendingTransition = 'none' | 'innings' | 'super_over' | 'match'
 
+export type PaperThemeId =
+  | 'notebook'
+  | 'newsprint'
+  | 'blueprint'
+  | 'khadi'
+  | 'midnight'
+  | 'rose'
+  | 'mint'
+  | 'lavender'
+  | 'sandstone'
+  | 'slate'
+  | 'ochre'
+  | 'sky'
+  | 'forest'
+  | 'terracotta'
+  | 'peach'
+  | 'cream'
+  | 'graphite'
+  | 'mustard'
+  | 'teal'
+  | 'sepia'
+
+export type PenStyleId =
+  | 'clear'
+  | 'bluebarrel'
+  | 'blackbarrel'
+  | 'redbarrel'
+  | 'greenbarrel'
+  | 'goldbarrel'
+  | 'silverbarrel'
+  | 'copper'
+  | 'neon'
+  | 'pastelpink'
+  | 'pastelblue'
+  | 'pastelgreen'
+  | 'olive'
+  | 'navy'
+  | 'maroon'
+  | 'violet'
+  | 'charcoal'
+  | 'sunset'
+  | 'mintgreen'
+  | 'lavenderblue'
+
 export interface RoomDTO {
   id: string
   code: string
@@ -72,6 +116,8 @@ export interface PlayerDTO {
   joinedAt: string
   leftAt: string | null
   squad: PlayerSquad[]
+  paperThemeId: PaperThemeId | null
+  penStyleId: PenStyleId | null
 }
 
 export interface InningsDTO {
@@ -178,4 +224,6 @@ export interface LocalProfile {
   name: string
   teamName: string
   squad: string[]
+  paperThemeId: PaperThemeId | null
+  penStyleId: PenStyleId | null
 }

@@ -17,6 +17,7 @@ No accounts. No downloads. Just a room code, a bit of mischief, and eleven hand-
 - **Reconnect and grace** — anonymous sessions restore seats, snapshots restore the match, and a disconnected opponent can be claimed after a 60-second grace period.
 - **Bilingual by default** — Bengali first, English toggle, complete UI translation.
 - **Paper-notebook design** — ruled paper, blue ballpoint ink, sticky notes, handwritten headings, tactile buttons, synthesized sounds, haptics, and reduced-motion support.
+- **Per-player looks** — 20 paper themes (notebook, newsprint, blueprint, midnight, kraft and more) and 20 pen styles (classic clear, coloured barrels, metallics and pastels). Host and guest pick independently when they enter a room, and their choices are remembered on that seat.
 - **Ephemeral by design** — rooms live only while the players need them.
 
 ---
@@ -103,11 +104,11 @@ supabase/migrations/0001_init.sql
 supabase/migrations/0002_wicket_squads.sql
 supabase/migrations/0003_room_cleanup.sql
 supabase/migrations/0004_manual_spin.sql
+supabase/migrations/0005_theme_pen_prefs.sql
 ```
 
 and run them in order on a fresh project. On an existing project that already
-has `0001`, run `0002_wicket_squads.sql`, `0003_room_cleanup.sql`, and
-`0004_manual_spin.sql` in that order.
+has `0001`–`0004`, run `0005_theme_pen_prefs.sql` to enable the per-seat themes.
 `0002` makes the wicket setting authoritative for squad size: 10 wickets means
 10 batters a side, and changing the wicket count trims or pads both squads.
 `0003` replaces `leave_room` with a hard delete so a room and all of its related
@@ -115,6 +116,11 @@ rows disappear as soon as a player leaves.
 `0004` gives the bowler manual control of the board. The bowler drags it around
 and `stop_spin` records the resting angle the moment they release. The batter's
 opaque sheet never receives that angle until the reveal ball is resolved.
+`0005` adds the per-seat `paper_theme_id` and `pen_style_id` columns, exposes
+them in `get_room_snapshot`, and adds the whitelisted `update_player_theme`
+RPC. The picker still saves to local storage when this migration has not been
+applied yet, so the look feature works offline; the migration simply lets the
+choice travel with the seat across devices.
 
 Migration `0001` creates:
 
@@ -367,8 +373,8 @@ Vite replaces `import.meta.env.VITE_*` at build time. Changing the Supabase proj
 │  ├─ manifest.webmanifest
 │  └─ _redirects
 ├─ src/
-│  ├─ components/          shared UI, board SVG, dialogs, toggles
-│  ├─ config/              board, room-code, timers, env config
+│  ├─ components/          shared UI, board SVG, pen, theme picker, dialogs
+│  ├─ config/              board, themes and pens, room-code, timers, env config
 │  ├─ features/
 │  │  ├─ landing/          landing page and create/join dialogs
 │  │  ├─ lobby/            join gate, squad editor, lobby, invites
@@ -382,6 +388,10 @@ Vite replaces `import.meta.env.VITE_*` at build time. Changing the Supabase proj
 │  ├─ store/               preferences and toasts
 │  └─ types/               shared DTOs
 ├─ supabase/migrations/0001_init.sql
+├─ supabase/migrations/0002_wicket_squads.sql
+├─ supabase/migrations/0003_room_cleanup.sql
+├─ supabase/migrations/0004_manual_spin.sql
+├─ supabase/migrations/0005_theme_pen_prefs.sql
 ├─ netlify.toml
 ├─ vercel.json
 └─ vite.config.ts

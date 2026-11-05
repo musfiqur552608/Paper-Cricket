@@ -3,6 +3,8 @@ import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { BOARD_SEGMENTS, SEGMENT_ANGLE } from '../../config/gameConfig'
 import { PenGraphic } from './Pen3D'
+import type { PaperTheme } from '../../config/themes'
+import { mixHex } from '../../config/themes'
 
 const SIZE = 560
 const CX = SIZE / 2
@@ -60,6 +62,7 @@ export interface BoardProps {
   transitionMs?: number
   showAim?: boolean
   compact?: boolean
+  theme?: PaperTheme
 }
 
 export function Board({
@@ -73,6 +76,7 @@ export function Board({
   transitionMs = 0,
   showAim = true,
   compact = false,
+  theme,
 }: BoardProps) {
   const { t } = useTranslation()
   const rawId = useId()
@@ -81,6 +85,26 @@ export function Board({
   const glowId = `glow-${uid}`
   const hatchId = `hatch-${uid}`
 
+  const th = theme ?? {
+    sheetBg: '#fffdf6',
+    sheetBorder: '#d6c7a9',
+    sheetText: '#234e8b',
+    wedgeEven: '#fffdf7',
+    wedgeOdd: '#f6f1e6',
+    wedgeHighlight: '#f6cf72',
+    wedgeStroke: '#b87812',
+    spoke: '#234e8b',
+    label: '#234e8b',
+    labelStroke: '#234e8b',
+    hubOuter: '#fffdf7',
+    hubInner: '#fffdf7',
+    dot: '#234e8b',
+    aimLine: '#c8544a',
+    aimGlow: '#e9a23b',
+    scribble: '#7a4b0a',
+    hintText: '#7a4b0a',
+  }
+
   const aimEnd = aimAngle != null ? pointOnCircle(R_OUTER - 34, aimAngle) : null
   const aimStart = aimAngle != null ? pointOnCircle(R_HUB + 4, aimAngle) : null
   const penPoint = aimAngle != null ? pointOnCircle(R_OUTER - 8, aimAngle) : null
@@ -88,7 +112,7 @@ export function Board({
   return (
     <div className={clsx('relative aspect-square w-full select-none', className)}>
       {/* paper sheet under the board */}
-      <div className="absolute inset-[1.5%] rotate-[-0.8deg] rounded-[4%] border border-[#d6c7a9] bg-[#fffdf6] shadow-[0_22px_45px_-20px_rgba(60,45,17,.5),0_2px_0_rgba(255,255,255,.7)_inset]" />
+      <div className="absolute inset-[1.5%] rotate-[-0.8deg] rounded-[4%] border shadow-[0_22px_45px_-20px_rgba(60,45,17,.5),0_2px_0_rgba(255,255,255,.7)_inset]" style={{ borderColor: th.sheetBorder, backgroundColor: th.sheetBg }} />
       <div className="absolute inset-[3%] rotate-[0.5deg] rounded-[3%] border border-[#e3d8c2]/80" />
       {/* tape strips */}
       <div className="absolute -left-[1%] top-[19%] h-[6%] w-[13%] -rotate-[32deg] bg-[#e7cfa1]/55 shadow-sm" aria-hidden="true" />
@@ -107,7 +131,7 @@ export function Board({
           </filter>
           <filter id={glowId} x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="7" result="blur" />
-            <feFlood floodColor="#e9a23b" floodOpacity="0.65" />
+            <feFlood floodColor={th.aimGlow} floodOpacity="0.65" />
             <feComposite in2="blur" operator="in" />
             <feMerge>
               <feMergeNode />
@@ -115,7 +139,7 @@ export function Board({
             </feMerge>
           </filter>
           <pattern id={hatchId} width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(38)">
-            <line x1="0" y1="0" x2="0" y2="9" stroke="#234e8b" strokeWidth="1.1" opacity="0.12" />
+            <line x1="0" y1="0" x2="0" y2="9" stroke={th.wedgeStroke} strokeWidth="1.1" opacity="0.12" />
           </pattern>
         </defs>
 
@@ -138,12 +162,12 @@ export function Board({
                     d={wedgePath(index, BOARD_SEGMENTS.length)}
                     fill={
                       isHighlighted
-                        ? '#f6cf72'
+                        ? th.wedgeHighlight
                         : index % 2 === 0
-                          ? '#fffdf7'
+                          ? th.wedgeEven
                           : isWicket
-                            ? '#edf2fb'
-                            : '#f6f1e6'
+                            ? mixHex(th.wedgeEven, th.aimLine, 0.08)
+                            : th.wedgeOdd
                     }
                     stroke="none"
                     opacity={isHighlighted ? 0.96 : 1}
@@ -154,7 +178,7 @@ export function Board({
                   <path
                     d={wedgePath(index, BOARD_SEGMENTS.length)}
                     fill="none"
-                    stroke={isHighlighted ? '#b87812' : 'transparent'}
+                    stroke={isHighlighted ? th.wedgeStroke : 'transparent'}
                     strokeWidth={isHighlighted ? 3.2 : 0}
                   />
                 </g>
@@ -162,12 +186,12 @@ export function Board({
             })}
 
             {/* outer rings */}
-            <path d={wobblyCircle(252, 2, 2.1)} fill="none" stroke="#234e8b" strokeWidth="3.1" strokeLinecap="round" />
-            <path d={wobblyCircle(243, 9, 1.3)} fill="none" stroke="#234e8b" strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
+            <path d={wobblyCircle(252, 2, 2.1)} fill="none" stroke={th.spoke} strokeWidth="3.1" strokeLinecap="round" />
+            <path d={wobblyCircle(243, 9, 1.3)} fill="none" stroke={th.spoke} strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
             <path
               d={wobblyCircle(257, 15, 1.2)}
               fill="none"
-              stroke="#234e8b"
+              stroke={th.spoke}
               strokeWidth="1"
               strokeLinecap="round"
               strokeDasharray="2.5 5"
@@ -180,7 +204,7 @@ export function Board({
                 key={`spoke-${segment.code}`}
                 d={spokePath(index, BOARD_SEGMENTS.length)}
                 fill="none"
-                stroke="#234e8b"
+                stroke={th.spoke}
                 strokeWidth={index === 0 ? 2 : 1.75}
                 strokeLinecap="round"
                 opacity={0.88}
@@ -207,7 +231,7 @@ export function Board({
                     fontSize={compact ? 27 : 31}
                     fontWeight={700}
                     letterSpacing="0.01em"
-                    fill={isHighlighted ? '#7a4b0a' : '#234e8b'}
+                    fill={isHighlighted ? th.hintText : th.label}
                     style={{ filter: isHighlighted ? 'drop-shadow(0 1px 0 rgba(255,255,255,.45))' : undefined }}
                   >
                     {segment.labelEn}
@@ -215,7 +239,7 @@ export function Board({
                   <path
                     d={`M -13 17 Q 0 20.5 14 16`}
                     fill="none"
-                    stroke={isHighlighted ? '#a76510' : '#234e8b'}
+                    stroke={isHighlighted ? th.wedgeStroke : th.labelStroke}
                     strokeWidth="1.25"
                     strokeLinecap="round"
                     opacity={isHighlighted ? 0.8 : 0.28}
@@ -225,22 +249,22 @@ export function Board({
             })}
 
             {/* centre hub */}
-            <circle cx={CX} cy={CY} r={R_HUB + 6} fill="#fffdf7" stroke="none" />
+            <circle cx={CX} cy={CY} r={R_HUB + 6} fill={th.hubOuter} stroke="none" />
             <path
               d={wobblyCircle(R_HUB + 4.5, 8, 0.8)}
               fill="none"
-              stroke="#234e8b"
+              stroke={th.spoke}
               strokeWidth="2.6"
             />
             <path
               d={wobblyCircle(R_HUB - 1, 17, 0.7)}
               fill="none"
-              stroke="#234e8b"
+              stroke={th.spoke}
               strokeWidth="1.15"
               opacity="0.5"
             />
-            <circle cx={CX} cy={CY} r={3.4} fill="#234e8b" />
-            <path d={`M ${CX - 9} ${CY - 7} l 2.2 2.6 M ${CX + 8} ${CY + 9} l 2.2 2.6`} stroke="#c8544a" strokeWidth="1.5" strokeLinecap="round" opacity=".65" />
+            <circle cx={CX} cy={CY} r={3.4} fill={th.dot} />
+            <path d={`M ${CX - 9} ${CY - 7} l 2.2 2.6 M ${CX + 8} ${CY + 9} l 2.2 2.6`} stroke={th.aimLine} strokeWidth="1.5" strokeLinecap="round" opacity=".65" />
           </g>
         </g>
 
@@ -252,7 +276,7 @@ export function Board({
                 cx={aimEnd[0]}
                 cy={aimEnd[1]}
                 r={45}
-                fill="#f2c75f"
+                fill={th.aimGlow}
                 opacity={0.32}
                 filter={`url(#${glowId})`}
               />
@@ -262,13 +286,13 @@ export function Board({
               y1={aimStart[1]}
               x2={aimEnd[0]}
               y2={aimEnd[1]}
-              stroke="#c8544a"
+              stroke={th.aimLine}
               strokeWidth={aimActive ? 4 : 3}
               strokeLinecap="round"
               strokeDasharray={aimActive && !penAtEnd ? '9 11' : undefined}
               opacity={aimActive ? 0.92 : 0.8}
             />
-            <circle cx={aimStart[0]} cy={aimStart[1]} r={4} fill="#fffdf7" stroke="#c8544a" strokeWidth="2" />
+            <circle cx={aimStart[0]} cy={aimStart[1]} r={4} fill={th.sheetBg} stroke={th.aimLine} strokeWidth="2" />
             {penAtEnd && penPoint ? (
               <g transform={`translate(${penPoint[0]} ${penPoint[1]}) rotate(${aimAngle + 90}) scale(0.62)`}>
                 <PenGraphic />
@@ -278,10 +302,10 @@ export function Board({
         )}
       </svg>
       {/* tiny margin scribbles */}
-      <span className="absolute bottom-[3.5%] right-[7%] font-hand text-[11px] text-ink/40 sm:text-[13px]">
+      <span className="absolute bottom-[3.5%] right-[7%] font-hand text-[11px] opacity-40 sm:text-[13px]" style={{ color: th.scribble }}>
         {t('board.paperCricket')}
       </span>
-      <span className="absolute left-[7%] top-[4%] font-hand text-[10px] tracking-wide text-ink/30 sm:text-xs">
+      <span className="absolute left-[7%] top-[4%] font-hand text-[10px] tracking-wide opacity-30 sm:text-xs" style={{ color: th.scribble }}>
         {t('board.exerciseBook')}
       </span>
     </div>

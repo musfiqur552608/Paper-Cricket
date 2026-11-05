@@ -92,6 +92,17 @@ export async function updatePlayerProfile(roomId: string, profile: ProfilePayloa
   })
 }
 
+export async function updatePlayerTheme(
+  roomId: string,
+  prefs: { paperThemeId: string; penStyleId: string },
+): Promise<void> {
+  await call<null>('update_player_theme', {
+    p_room_id: roomId,
+    p_paper_theme: prefs.paperThemeId,
+    p_pen_style: prefs.penStyleId,
+  })
+}
+
 export async function setPlayerReady(roomId: string, ready: boolean): Promise<void> {
   await call<null>('set_ready', { p_room_id: roomId, p_ready: ready })
 }

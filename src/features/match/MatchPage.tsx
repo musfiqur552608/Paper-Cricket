@@ -11,6 +11,7 @@ import {
   Loader2,
   LogOut,
   PenLine,
+  Palette,
   RotateCw,
   ShieldCheck,
   Sparkles,
@@ -25,6 +26,7 @@ import { Board } from '../../components/board/Board'
 import { Logo } from '../../components/ui/Logo'
 import { LanguageToggle, SoundToggle } from '../../components/ui/Toggles'
 import { LeaveConfirmDialog } from '../../components/ui/LeaveConfirmDialog'
+import { ThemePenPicker } from '../../components/ui/ThemePenPicker'
 import { PlayerAvatar } from '../../components/game/PlayerAvatar'
 import { HoldPen } from './HoldPen'
 import { OpaqueScreen } from './OpaqueScreen'
@@ -39,7 +41,8 @@ import { commentaryForBall } from '../../lib/commentary'
 import { errorKey, toAppError } from '../../lib/errors'
 import { notify } from '../../store/toast'
 import { sound, haptic } from '../../lib/sound'
-import { usePreferences } from '../../store/preferences'
+import { usePreferences, useThemePrefs } from '../../store/preferences'
+import { getPaperTheme } from '../../config/themes'
 import { SPIN } from '../../config/gameConfig'
 import { formatOvers, normalizeAngle } from '../../lib/gameEngine'
 
@@ -59,9 +62,13 @@ function sleep(ms: number) {
 export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, refresh, onLeave }: MatchProps) {
   const { t } = useTranslation()
   const reducedPref = usePreferences((state) => state.reducedMotion)
+  const paperThemeId = useThemePrefs((state) => state.paperThemeId)
+  const themeConfigured = useThemePrefs((state) => state.configured)
+  const setThemePrefs = useThemePrefs((state) => state.setThemePrefs)
   const now = useServerClock(snapshot.serverNow)
   const view = getMatchView(snapshot, userId, now)
   const { room } = snapshot
+  const [styleOpen, setStyleOpen] = useState(false)
   const [localSpin, setLocalSpin] = useState<{
     id: string
     durationMs: number
@@ -93,6 +100,8 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
   const spinIdRef = useRef<string | null>(null)
   const manualRotationRef = useRef(0)
   const commitRef = useRef(false)
+  const themePromptedRef = useRef(false)
+  const themeAdoptedRef = useRef(false)
 
   const activeSpin = view.activeSpin ?? localSpin
   const effectiveSpin =
@@ -165,6 +174,28 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveSpin?.id])
+
+  // If this seat already saved a theme on the server, adopt it once so a
+  // returning player sees the same paper and pen on a new device.
+  useEffect(() => {
+    if (!view.me || themeAdoptedRef.current) return
+    if (!view.me.paperThemeId) return
+    themeAdoptedRef.current = true
+    setThemePrefs({
+      paperThemeId: view.me.paperThemeId,
+      penStyleId: view.me.penStyleId ?? 'clear',
+    })
+  }, [setThemePrefs, view.me])
+
+  // First entry into a live match without a saved look prompts the picker.
+  // It only opens once per browser until the player saves a look; the defaults
+  // are preselected, so a player who just wants to play can confirm in one tap.
+  useEffect(() => {
+    if (!view.me || themePromptedRef.current || themeConfigured) return
+    if (view.me.paperThemeId) return
+    themePromptedRef.current = true
+    setStyleOpen(true)
+  }, [themeConfigured, view.me])
 
   // Each new ball starts the bowler's board at the angle of the ball before it.
   useEffect(() => {
@@ -464,6 +495,15 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-leaf" /> {t('common.live')}
           </span>
           <div className="ml-auto flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setStyleOpen(true)}
+              className="grid h-9 w-9 place-items-center rounded-full border border-[#d3c2a0] bg-paper-50/80 text-slate-500 transition hover:bg-white hover:text-pencil"
+              aria-label={t('theme.picker.title')}
+              title={t('theme.picker.title')}
+            >
+              <Palette size={16} />
+            </button>
             <LanguageToggle compact />
             <SoundToggle />
             <button
@@ -531,6 +571,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
                   penAtEnd={Boolean(revealedBall)}
                   revealed={Boolean(revealedBall)}
                   compact
+                  theme={getPaperTheme(paperThemeId)}
                 />
                 {isBowler && phase === 'ready' && batterReady && !commitBusy ? (
                   <BoardSpinControl
@@ -771,6 +812,15 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
           </aside>
         </div>
       </main>
+
+      <ThemePenPicker
+        open={styleOpen}
+        onClose={() => setStyleOpen(false)}
+        onSaved={() => void refresh()}
+        roomId={room.id}
+        currentTheme={view.me?.paperThemeId ?? null}
+        currentPen={view.me?.penStyleId ?? null}
+      />
 
       <LeaveConfirmDialog
         open={leaveOpen}
