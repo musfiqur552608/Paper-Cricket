@@ -247,7 +247,7 @@ export function LandingPage() {
 
         {/* ── Invite band ────────────────────────────────────────────── */}
         <section className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
-          <motion.div {...fadeUp} className="relative overflow-hidden rounded-[26px] bg-ink px-6 py-9 text-paper-50 shadow-[0_25px_50px_-24px_rgba(23,55,99,.6)] sm:px-10 sm:py-11 dark:bg-gradient-to-br dark:from-[#1e3a5f] dark:to-[#0b1626] dark:shadow-none dark:ring-1 dark:ring-slate-700/60">
+          <motion.div {...fadeUp} className="relative overflow-hidden rounded-[26px] bg-ink px-6 py-9 text-white shadow-[0_25px_50px_-24px_rgba(23,55,99,.6)] sm:px-10 sm:py-11 dark:bg-gradient-to-br dark:from-[#1e3a5f] dark:to-[#0b1626] dark:shadow-none dark:ring-1 dark:ring-slate-700/60">
             <div className="absolute inset-0 opacity-[0.13]" style={{ backgroundImage: 'repeating-linear-gradient(to bottom, transparent 0, transparent 31px, #fff 31px, #fff 32px)' }} />
             <svg viewBox="0 0 350 350" className="pointer-events-none absolute -right-16 -top-20 h-[340px] w-[340px] text-white/10 animate-spin [animation-duration:26s] motion-reduce:animate-none" fill="none" aria-hidden="true">
               <circle cx="175" cy="175" r="140" stroke="currentColor" strokeWidth="2" />
@@ -260,15 +260,15 @@ export function LandingPage() {
               <circle cx="175" cy="175" r="95" stroke="currentColor" strokeWidth="1" strokeDasharray="2 7" />
             </svg>
             <div className="relative z-10 max-w-2xl">
-              <p className="mb-2 flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.22em] text-paper-300/80">
+              <p className="mb-2 flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.22em] text-white/90">
                 <Send size={13} /> {t('landing.inviteTitle')}
               </p>
               <h2 className="text-balance font-hand text-[38px] font-bold leading-[1.02] text-white sm:text-[48px]">
                 {t('landing.inviteHeading')}
               </h2>
-              <p className="mt-3 max-w-lg text-[13px] leading-relaxed text-paper-200/75">{t('landing.inviteBody')}</p>
+              <p className="mt-3 max-w-lg text-[13px] leading-relaxed text-white/90">{t('landing.inviteBody')}</p>
               <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
-                <button type="button" onClick={() => setCreateOpen(true)} className="btn bg-paper-50 text-ink-deep hover:bg-white">
+                <button type="button" onClick={() => setCreateOpen(true)} className="btn bg-paper-50 text-ink-deep hover:bg-[#fffdf7] dark:bg-white dark:text-[#173763] dark:hover:bg-[#eef4ff]">
                   <Plus size={17} /> {t('landing.createCta')}
                 </button>
                 <button type="button" onClick={() => setHowOpen(true)} className="btn border border-white/25 bg-white/10 text-white hover:bg-white/15">
@@ -277,7 +277,7 @@ export function LandingPage() {
               </div>
             </div>
             <div className="relative z-10 mt-7 flex items-center gap-3 sm:absolute sm:bottom-8 sm:right-10 sm:mt-0">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-paper-300/60">{t('lobby.roomReady')}</span>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-white/85">{t('lobby.roomReady')}</span>
               <span className="rounded-lg border border-white/25 bg-white/10 px-3 py-2 font-mono text-xl font-bold tracking-[0.22em]">A7K9Q2</span>
             </div>
           </motion.div>

@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 
 const COLORS = [
-  'bg-[#dfe9fa] text-ink-deep',
+  'bg-[#dfe9fa] text-[#234e8b]',
   'bg-[#f8e4df] text-[#8c3d35]',
   'bg-[#e2efe5] text-[#2f6f52]',
   'bg-[#fbefd2] text-[#8c6421]',

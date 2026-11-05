@@ -276,7 +276,13 @@ export function OpaqueScreen({
                     </span>
                   </div>
 
-                  <div id="aim-instructions" className="mt-auto w-full bg-gradient-to-t from-[#f3ead8]/95 to-transparent px-5 pb-5 pt-6 text-center">
+                  <div
+                    id="aim-instructions"
+                    className="mt-auto w-full px-5 pb-5 pt-6 text-center"
+                    style={{
+                      backgroundImage: `linear-gradient(to top, ${cover ? `${cover.sheetBg}f2` : 'rgba(243,234,216,.95)'}, transparent)`,
+                    }}
+                  >
                     {showAim ? (
                       <>
                         <p className="font-hand text-[23px] font-bold leading-none" style={{ color: coverText }}>

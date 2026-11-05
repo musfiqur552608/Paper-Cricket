@@ -361,7 +361,7 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
                   <p className="truncate text-[10px] font-bold text-slate-500">{player.teamName}</p>
                   <p className="font-hand text-[30px] font-bold leading-none text-ink-deep">
                     {main ? main.runs : 0}
-                    <span className="text-xl text-ink/40">/{main ? main.wickets : 0}</span>
+                    <span className="text-xl text-ink/80">/{main ? main.wickets : 0}</span>
                   </p>
                   <p className="text-[9.5px] text-slate-400">{main ? formatOvers(main.legalBalls) : '0.0'} {t('common.oversShort')}</p>
                 </div>
@@ -395,7 +395,7 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
         </div>
 
         {/* export card starts here */}
-        <article ref={exportRef} className="paper-card overflow-hidden rounded-[24px] bg-[#fffdf7] p-4 sm:p-6" aria-label={t('result.imageAlt')}>
+        <article ref={exportRef} className="force-light paper-card overflow-hidden rounded-[24px] bg-[#fffdf7] p-4 sm:p-6" aria-label={t('result.imageAlt')}>
           <header className="mb-4 border-b-2 border-ink/30 pb-3 text-center">
             <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-slate-400">{t('result.scorebook')}</p>
             <h2 className="mt-1 font-hand text-[40px] font-bold leading-none text-ink-deep sm:text-[48px]">{t('result.scorecardTitle')}</h2>
@@ -554,7 +554,7 @@ function InningsScorecard({ innings, snapshot, title }: { innings: InningsDTO; s
         </div>
         <div className="shrink-0 text-right">
           <p className="font-hand text-[28px] font-bold leading-none text-ink-deep">
-            {innings.runs}<span className="text-lg text-ink/40">/{innings.wickets}</span>
+            {innings.runs}<span className="text-lg text-ink/80">/{innings.wickets}</span>
           </p>
           <p className="text-[9px] text-slate-400">{formatOvers(innings.legalBalls)} {t('common.oversShort')}</p>
         </div>

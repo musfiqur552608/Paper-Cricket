@@ -16,7 +16,7 @@ export function RuleStepper({
   disabled?: boolean
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-[#d8c8ab] bg-white/40 px-3 py-2.5">
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-[#d8c8ab] bg-white/40 px-3 py-2.5 dark:border-slate-600/35 dark:bg-white/10">
       <span className="text-[12px] font-semibold text-slate-700">{label}</span>
       <div className="flex items-center gap-1">
         <button
@@ -24,7 +24,7 @@ export function RuleStepper({
           disabled={disabled || value <= min}
           onClick={() => onChange(value - 1)}
           aria-label={`${label} −`}
-          className="grid h-7 w-7 place-items-center rounded-md border border-[#d8c8ab] bg-paper-50 text-slate-500 hover:bg-white disabled:opacity-30"
+          className="grid h-7 w-7 place-items-center rounded-md border border-[#d8c8ab] bg-paper-50 text-slate-500 hover:bg-white disabled:opacity-30 dark:border-slate-600/35 dark:bg-white/10 dark:hover:bg-white/15"
         >
           <ChevronLeft size={13} />
         </button>
@@ -34,7 +34,7 @@ export function RuleStepper({
           disabled={disabled || value >= max}
           onClick={() => onChange(value + 1)}
           aria-label={`${label} +`}
-          className="grid h-7 w-7 place-items-center rounded-md border border-[#d8c8ab] bg-paper-50 text-slate-500 hover:bg-white disabled:opacity-30"
+          className="grid h-7 w-7 place-items-center rounded-md border border-[#d8c8ab] bg-paper-50 text-slate-500 hover:bg-white disabled:opacity-30 dark:border-slate-600/35 dark:bg-white/10 dark:hover:bg-white/15"
         >
           <ChevronRight size={13} />
         </button>

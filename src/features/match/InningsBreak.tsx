@@ -48,7 +48,7 @@ export function InningsBreak({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-[#d8c7a2] bg-[#fffdf6] p-6 text-center shadow-2xl"
+            className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-[#d8c7a2] bg-[#fffdf6] p-6 text-center shadow-2xl dark:border-slate-600/40 dark:bg-[#101a2e]"
             initial={{ scale: 0.92, rotateY: 8, y: 18 }}
             animate={{ scale: 1, rotateY: 0, y: 0 }}
             exit={{ scale: 0.96, rotateY: -8, y: 10, opacity: 0 }}

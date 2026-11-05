@@ -34,8 +34,10 @@ export function ToastViewport() {
               className={clsx(
                 'pointer-events-auto flex max-w-md items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-left text-[13px] font-medium shadow-paper backdrop-blur-sm',
                 toast.tone === 'error' && 'border-red-300/70 bg-red-50/95 text-red-800',
-                toast.tone === 'success' && 'border-emerald-300/70 bg-emerald-50/95 text-emerald-800',
-                toast.tone === 'pencil' && 'border-[#e8bcb6] bg-[#fff4f1]/95 text-[#8c3d35]',
+                toast.tone === 'success' &&
+                  'border-emerald-300/70 bg-emerald-50/95 text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-950/70 dark:text-emerald-200',
+                toast.tone === 'pencil' &&
+                  'border-[#e8bcb6] bg-[#fff4f1]/95 text-[#8c3d35] dark:border-red-400/40 dark:bg-red-950/60 dark:text-red-200',
                 toast.tone === 'info' && 'border-[#d3c2a0] bg-paper-50/95 text-slate-700',
               )}
             >

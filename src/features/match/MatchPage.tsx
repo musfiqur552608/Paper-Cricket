@@ -640,10 +640,10 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
                     className={clsx(
                       'pointer-events-none absolute right-[4%] top-[10%] z-40 rotate-[-5deg] rounded-lg border-2 px-3 py-1.5 shadow-lg',
                       revealedBall.isWicket
-                        ? 'border-pencil/50 bg-[#fff2ef] text-pencil'
+                        ? 'border-pencil/50 bg-[#fff2ef] text-pencil dark:border-red-400/40 dark:bg-red-950/70 dark:text-red-200'
                         : revealedBall.outcome === '4' || revealedBall.outcome === '6'
                           ? 'border-ink/30 bg-[#eef4ff] text-ink-deep'
-                          : 'border-[#c9ad6c] bg-[#fff7dd] text-[#825d18]',
+                          : 'border-[#c9ad6c] bg-[#fff7dd] text-[#825d18] dark:border-amber-400/40 dark:bg-amber-950/60 dark:text-amber-200',
                     )}
                   >
                     <p className="font-hand text-[30px] font-bold leading-none">

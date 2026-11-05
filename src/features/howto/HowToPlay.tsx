@@ -70,7 +70,7 @@ export function HowToPlay({ open, onClose }: { open: boolean; onClose: () => voi
           { title: t('how.freeHitTitle'), body: t('how.freeHitBody'), code: 'FH' },
         ].map((item) => (
           <div key={item.code} className="flex gap-3 rounded-xl border border-[#e5d8c0] bg-paper-50/70 px-3 py-2.5 dark:border-slate-600/35 dark:bg-white/10">
-            <span className="grid min-w-12 place-items-center rounded-lg border border-ink/20 bg-white px-2 font-hand text-lg font-bold text-ink dark:bg-white/10">
+            <span className="grid min-w-12 place-items-center rounded-lg border border-ink/20 bg-white px-2 font-hand text-lg font-bold text-ink-deep dark:bg-white/10">
               {item.code}
             </span>
             <div>

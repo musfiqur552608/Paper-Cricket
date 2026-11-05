@@ -2,7 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+.force-light {
   color-scheme: light;
   --paper: #faf5e7;
   --ink: #234e8b;
@@ -39,6 +40,9 @@
   --ink-ghost: rgba(35, 78, 139, 0.16);
   --ink-ghost-2: rgba(35, 78, 139, 0.08);
   --ink-ghost-3: rgba(35, 78, 139, 0.05);
+  --bg-white-35: rgba(255, 255, 255, 0.35);
+  --bg-white-40: rgba(255, 255, 255, 0.4);
+  --bg-white-45: rgba(255, 255, 255, 0.45);
   --bg-white-50: rgba(255, 255, 255, 0.5);
   --bg-white-55: rgba(255, 255, 255, 0.55);
   --bg-white-60: rgba(255, 255, 255, 0.6);
@@ -46,6 +50,7 @@
   --bg-white-70: rgba(255, 255, 255, 0.7);
   --bg-white-75: rgba(255, 255, 255, 0.75);
   --bg-white-80: rgba(255, 255, 255, 0.8);
+  --bg-white-90: rgba(255, 255, 255, 0.9);
   --bg-paper-50-75: rgba(255, 253, 247, 0.75);
   --bg-paper-50-80: rgba(255, 253, 247, 0.8);
   --bg-paper-50-90: rgba(255, 253, 247, 0.9);
@@ -59,6 +64,15 @@
   --text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
   --btn-3d: rgba(23, 55, 99, 0.22);
   --btn-3d-hover: rgba(23, 55, 99, 0.3);
+}
+
+/* Force the light paper palette inside components that must always print on
+   cream paper (for example the downloadable result scorecard). */
+.force-light {
+  color-scheme: light;
+  /* The printed scorecard uses tiny 8–10px labels; the standard faint grey is
+     not readable on cream paper, so keep a darker neutral in this scope. */
+  --text-slate-400: #5b6b82;
 }
 
 .dark {
@@ -90,13 +104,16 @@
   --text-slate-700: #cbd5e1;
   --text-slate-600: #b8c7d9;
   --text-slate-500: #94a3b8;
-  --text-slate-400: #7e8ca3;
+  --text-slate-400: #a8b7cc;
   --ink-mid: #7fa6e0;
   --ink-soft: #93c5fd;
   --ink-deep: #eef4ff;
   --ink-ghost: rgba(147, 197, 253, 0.16);
   --ink-ghost-2: rgba(147, 197, 253, 0.12);
   --ink-ghost-3: rgba(147, 197, 253, 0.08);
+  --bg-white-35: rgba(15, 23, 42, 0.35);
+  --bg-white-40: rgba(15, 23, 42, 0.4);
+  --bg-white-45: rgba(15, 23, 42, 0.45);
   --bg-white-50: rgba(15, 23, 42, 0.5);
   --bg-white-55: rgba(15, 23, 42, 0.55);
   --bg-white-60: rgba(15, 23, 42, 0.6);
@@ -104,6 +121,7 @@
   --bg-white-70: rgba(15, 23, 42, 0.7);
   --bg-white-75: rgba(15, 23, 42, 0.75);
   --bg-white-80: rgba(15, 23, 42, 0.8);
+  --bg-white-90: rgba(15, 23, 42, 0.9);
   --bg-paper-50-75: rgba(15, 23, 42, 0.75);
   --bg-paper-50-80: rgba(15, 23, 42, 0.8);
   --bg-paper-50-90: rgba(15, 23, 42, 0.88);
@@ -208,7 +226,7 @@ button {
   }
 
   .ink-line {
-    @apply border-[#234e8b]/25;
+    @apply border-[\#234e8b]/25;
   }
 
   .btn {
@@ -400,22 +418,75 @@ button {
   color: var(--ink-deep);
 }
 
-.bg-white\/50,
-.bg-white\/55,
-.bg-white\/60,
-.bg-white\/65,
-.bg-white\/70,
-.bg-white\/75,
-.bg-white\/80 {
+.bg-white\/35 {
+  background-color: var(--bg-white-35);
+}
+
+.bg-white\/40 {
+  background-color: var(--bg-white-40);
+}
+
+.bg-white\/45 {
+  background-color: var(--bg-white-45);
+}
+
+.bg-white\/50 {
   background-color: var(--bg-white-50);
+}
+
+.bg-white\/55 {
+  background-color: var(--bg-white-55);
+}
+
+.bg-white\/60 {
+  background-color: var(--bg-white-60);
+}
+
+.bg-white\/65 {
+  background-color: var(--bg-white-65);
+}
+
+.bg-white\/70 {
+  background-color: var(--bg-white-70);
+}
+
+.bg-white\/75 {
+  background-color: var(--bg-white-75);
+}
+
+.bg-white\/80 {
+  background-color: var(--bg-white-80);
+}
+
+.bg-white\/90 {
+  background-color: var(--bg-white-90);
 }
 
 .bg-paper-50\/75,
 .bg-paper-50\/80,
 .bg-paper-50\/90,
+.bg-paper-50\/95,
 .bg-paper-50\/70,
 .bg-paper-50\/65 {
   background-color: var(--bg-paper-50-75);
+}
+
+/* Dark surfaces: keep accent fills deep enough for white text, and stop
+   hover states from flashing a near-white panel under light text. */
+.dark .bg-ink {
+  background-color: #2f66a8;
+}
+
+.dark .bg-pencil {
+  background-color: #b23b32;
+}
+
+.dark .hover\:bg-white:hover,
+.dark .hover\:bg-white\/60:hover,
+.dark .hover\:bg-\[\#ddf2e3\]:hover,
+.dark .hover\:bg-\[\#d9f0fa\]:hover,
+.dark .hover\:bg-\[\#e3e5fb\]:hover {
+  background-color: rgba(255, 255, 255, 0.12);
 }
 
 .border-\[\#d3c2a0\],
@@ -440,15 +511,15 @@ button {
   --tw-gradient-to: rgba(255, 255, 255, 0) var(--tw-gradient-to-position, 100%);
 }
 
-.bg-\[#fffdf6\]\/40 {
+.bg-\[\#fffdf6\]\/40 {
   background-color: var(--soft-paper);
 }
 
-.bg-\[#eef4ff\] {
+.bg-\[\#eef4ff\] {
   background-color: var(--soft-dark);
 }
 
-.bg-\[#fff8f5\]\/80 {
+.bg-\[\#fff8f5\]\/80 {
   background-color: var(--soft-bg);
 }
 
@@ -456,11 +527,12 @@ button {
   border-color: var(--card-border);
 }
 
-.bg-\[#f3ead8\] {
+.bg-\[\#f3ead8\] {
   background-color: var(--soft-paper-strong);
 }
 
-.bg-amber-50\/90 {
+.bg-amber-50\/90,
+.bg-amber-50\/80 {
   background-color: var(--soft-amber);
 }
 
@@ -472,11 +544,9 @@ button {
   background-color: var(--soft-amber);
 }
 
-.text-amber-900 {
-  color: var(--soft-amber-text);
-}
-
-.text-amber-800 {
+.text-amber-900,
+.text-amber-800,
+.text-amber-700 {
   color: var(--soft-amber-text);
 }
 
@@ -484,21 +554,21 @@ button {
   background-color: var(--soft-bg);
 }
 
-.border-\[#d8c8ab\],
-.border-\[#e5d8c0\],
-.border-\[#d8c7a2\]\/80,
-.border-\[#e1d3b8\]\/80,
-.border-\[#e1d3b8\],
-.border-\[#edf3fd\],
-.bg-\[#edf3fd\]\/80,
-.bg-\[#edf3fd\] {
+.border-\[\#d8c8ab\],
+.border-\[\#e5d8c0\],
+.border-\[\#d8c7a2\]\/80,
+.border-\[\#e1d3b8\]\/80,
+.border-\[\#e1d3b8\],
+.border-\[\#edf3fd\],
+.bg-\[\#edf3fd\]\/80,
+.bg-\[\#edf3fd\] {
   border-color: var(--card-border);
   background-color: var(--soft-dark);
 }
 
-.bg-\[#f5eddc\],
-.bg-\[#eaf4ec\],
-.bg-\[#edf3fd\] {
+.bg-\[\#f5eddc\],
+.bg-\[\#eaf4ec\],
+.bg-\[\#edf3fd\] {
   background-color: var(--soft-dark);
 }
 
@@ -552,8 +622,10 @@ button {
   border-color: var(--soft-amber-border);
 }
 
-.text-\[#956313\],
-.text-\[#94620f\] {
+.text-\[\#956313\],
+.text-\[\#94620f\],
+.text-\[\#966313\],
+.text-\[\#825d18\] {
   color: var(--soft-amber-text);
 }
 
@@ -575,29 +647,28 @@ button {
   color: var(--pencil);
 }
 
-.bg-\[#f7ed9d\]\/90 {
+.bg-\[\#f7ed9d\]\/90 {
   background-color: var(--soft-amber);
 }
 
-.text-\[#6b5a2c\] {
+.text-\[\#6b5a2c\] {
   color: var(--soft-amber-text);
 }
 
-.bg-\[#eaf7ed\],
-.bg-\[#e9f6fc\],
-.bg-\[#eff0fd\] {
+.bg-\[\#eaf7ed\],
+.bg-\[\#e9f6fc\],
+.bg-\[\#eff0fd\] {
   background-color: var(--soft-bg);
   border-color: var(--card-border);
 }
 
-.text-\[#216c43\],
-.text-\[#11658f\],
-.text-\[#41428f\] {
+.text-\[\#216c43\],
+.text-\[\#11658f\],
+.text-\[\#41428f\] {
   color: var(--text-slate-700);
 }
 
-.bg-\[#f3ead3\],
-.border-\[#d8c7a2\]\/80 {
+.bg-\[\#f3ead3\] {
   background-color: var(--soft-paper-strong);
 }
 

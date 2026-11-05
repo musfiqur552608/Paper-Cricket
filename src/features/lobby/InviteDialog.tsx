@@ -50,7 +50,7 @@ export function InviteDialog({
 
   return (
     <Dialog open={open} onClose={onClose} title={t('lobby.inviteTitle')} eyebrow={t('lobby.inviteEyebrow')} size="sm">
-      <div className="mb-5 flex items-center gap-2 rounded-xl border border-ink/15 bg-[#eef4fe] px-3 py-2.5">
+      <div className="mb-5 flex items-center gap-2 rounded-xl border border-ink/15 bg-[#eef4fe] px-3 py-2.5 dark:border-slate-600/40 dark:bg-white/10">
         <Smartphone size={17} className="text-ink" />
         <p className="text-[12px] leading-snug text-slate-600">
           {t('lobby.inviteInstructions')}
