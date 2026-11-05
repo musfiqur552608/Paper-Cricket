@@ -139,6 +139,10 @@ export function OpaqueScreen({
   const cover = dark ? getPaperTheme(paperThemeId ?? 'midnight') : null
   const ribbon = dark ? cover!.label : '#c8544a'
 
+  const coverText = cover ? cover.label : '#1e293b'
+  const coverSubtle = cover ? cover.scribble : '#64748b'
+  const coverShadow = cover ? `inset 0 0 40px ${cover.sheetBg}66` : 'inset 0 0 40px rgba(130,108,70,.08)'
+
   return (
     <AnimatePresence>
       {visible ? (
@@ -152,11 +156,12 @@ export function OpaqueScreen({
         >
           <div
             className="screen-paper absolute inset-0 border border-[#cbbb98] shadow-[inset_0_0_40px_rgba(130,108,70,.08)]"
-            style={
-              cover
+            style={{
+              ...(cover
                 ? { backgroundColor: cover.sheetBg, color: cover.label, borderColor: cover.sheetBorder }
-                : undefined
-            }
+                : {}),
+              boxShadow: coverShadow,
+            }}
           >
             {/* faint ruled paper + folded corner */}
             <div className="absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-black/10 to-transparent" />
@@ -165,9 +170,10 @@ export function OpaqueScreen({
               style={{
                 borderColor: cover ? cover.sheetBorder : '#d8c7a2',
                 backgroundColor: cover ? cover.sheetBg : '#f8f1df',
+                boxShadow: cover ? `0 2px 8px ${cover.sheetBg}88` : undefined,
               }}
             />
-            <span className="absolute left-4 top-4 rotate-[-2deg] font-hand text-[12px] tracking-wider text-ink/35">
+            <span className="absolute left-4 top-4 rotate-[-2deg] font-hand text-[12px] tracking-wider" style={{ color: coverSubtle }}>
               {t('match.screenOn')}
             </span>
 
@@ -185,11 +191,11 @@ export function OpaqueScreen({
                   <Pen3D className="h-14 w-32 -rotate-[18deg]" />
                   <span className="absolute -right-1 top-1 h-2.5 w-2.5 rounded-full bg-marigold" />
                 </div>
-                <p className="mt-5 font-hand text-[30px] font-bold leading-none text-ink-deep">
+                <p className="mt-5 font-hand text-[30px] font-bold leading-none" style={{ color: coverText }}>
                   {spinningText ?? t('match.spinning')}
                 </p>
-                <p className="mt-2 max-w-[220px] text-[11.5px] leading-relaxed text-slate-500">{t('match.handsOff')}</p>
-                <div className="mt-4 flex items-center gap-1.5 rounded-full border border-ink/15 bg-white/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-ink/50 dark:border-slate-600/40 dark:bg-white/10 dark:text-slate-300">
+                <p className="mt-2 max-w-[220px] text-[11.5px] leading-relaxed" style={{ color: coverSubtle }}>{t('match.handsOff')}</p>
+                <div className="mt-4 flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider" style={{ borderColor: cover ? cover.sheetBorder : undefined, color: coverText, backgroundColor: cover ? `${cover.sheetBg}cc` : undefined }}>
                   <Lock size={11} /> {t('match.screenNote')}
                 </div>
               </div>
@@ -209,14 +215,14 @@ export function OpaqueScreen({
               >
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center">
                   <div className="mt-5 flex w-full items-start justify-between px-5">
-                    <div className="rounded-md border border-ink/20 bg-white/55 px-2 py-1 text-left dark:border-slate-600/40 dark:bg-white/10">
-                      <p className="flex items-center gap-1 text-[8.5px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                    <div className="rounded-md border px-2 py-1 text-left" style={{ borderColor: cover ? cover.sheetBorder : '#d3c2a0', backgroundColor: cover ? `${cover.sheetBg}cc` : undefined }}>
+                      <p className="flex items-center gap-1 text-[8.5px] font-bold uppercase tracking-[0.18em]" style={{ color: coverSubtle }}>
                         <EyeOff size={10} /> {t('match.aimTitle')}
                       </p>
-                      <p className="font-hand text-lg leading-none text-ink-deep">{t('match.aimSub')}</p>
+                      <p className="font-hand text-lg leading-none" style={{ color: coverText }}>{t('match.aimSub')}</p>
                     </div>
                     {showAim ? (
-                      <div className="flex items-center gap-1.5 rounded-full border border-pencil/25 bg-[#fff8f5]/80 px-2.5 py-1.5 text-pencil dark:bg-white/10">
+                      <div className="flex items-center gap-1.5 rounded-full border px-2.5 py-1.5" style={{ borderColor: cover ? cover.sheetBorder : undefined, color: coverText, backgroundColor: cover ? `${cover.sheetBg}cc` : undefined }}>
                         <Timer size={13} />
                         <span className="font-mono text-sm font-bold">
                           {aimSeconds}
@@ -224,7 +230,7 @@ export function OpaqueScreen({
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5 rounded-full border border-ink/15 bg-white/55 px-2.5 py-1.5 text-[10px] font-semibold text-ink/60 dark:border-slate-600/40 dark:bg-white/10 dark:text-slate-300">
+                      <div className="flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[10px] font-semibold" style={{ borderColor: cover ? cover.sheetBorder : undefined, color: coverSubtle, backgroundColor: cover ? `${cover.sheetBg}cc` : undefined }}>
                         <Hourglass size={12} /> {t('match.waitingAim')}
                       </div>
                     )}
@@ -273,11 +279,11 @@ export function OpaqueScreen({
                   <div id="aim-instructions" className="mt-auto w-full bg-gradient-to-t from-[#f3ead8]/95 to-transparent px-5 pb-5 pt-6 text-center">
                     {showAim ? (
                       <>
-                        <p className="font-hand text-[23px] font-bold leading-none text-ink-deep">
+                        <p className="font-hand text-[23px] font-bold leading-none" style={{ color: coverText }}>
                           {sliding ? t('match.reveal') : dragging ? t('match.releaseToSlide') : t('match.aimTitle')}
                         </p>
-                        <p className="mt-1 text-[11px] text-slate-500">{t('match.aimBody')}</p>
-                        <p className="mt-1 hidden text-[10px] text-slate-400 sm:block">{t('match.aimWithKeys')}</p>
+                        <p className="mt-1 text-[11px]" style={{ color: coverSubtle }}>{t('match.aimBody')}</p>
+                        <p className="mt-1 hidden text-[10px] sm:block" style={{ color: coverSubtle }}>{t('match.aimWithKeys')}</p>
                         {!sliding ? (
                           <button
                             type="button"
@@ -295,8 +301,8 @@ export function OpaqueScreen({
                       </>
                     ) : (
                       <>
-                        <p className="font-hand text-[23px] font-bold leading-none text-ink-deep">{t('match.waitingAim')}</p>
-                        <p className="mt-1 text-[11px] text-slate-500">{t('match.aimSub')}</p>
+                        <p className="font-hand text-[23px] font-bold leading-none" style={{ color: coverText }}>{t('match.waitingAim')}</p>
+                        <p className="mt-1 text-[11px]" style={{ color: coverSubtle }}>{t('match.aimSub')}</p>
                       </>
                     )}
                   </div>

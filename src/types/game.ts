@@ -54,6 +54,16 @@ export type PaperThemeId =
   | 'mustard'
   | 'teal'
   | 'sepia'
+  | 'obsidian'
+  | 'crimsonatelier'
+  | 'emeraldink'
+  | 'ivorypremier'
+  | 'sapphirelane'
+  | 'walnut'
+  | 'chalkboard'
+  | 'origami'
+  | 'lagoon'
+  | 'velvet'
 
 export type PenStyleId =
   | 'clear'
@@ -76,6 +86,13 @@ export type PenStyleId =
   | 'sunset'
   | 'mintgreen'
   | 'lavenderblue'
+  | 'metalelite'
+  | 'rosegold'
+  | 'fountainquill'
+  | 'midnightelite'
+  | 'cherryblossom'
+  | 'neoncyber'
+  | 'emeraldprofi'
 
 export interface RoomDTO {
   id: string
