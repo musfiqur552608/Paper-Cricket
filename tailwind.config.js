@@ -5,27 +5,34 @@ export default {
     extend: {
       colors: {
         paper: {
-          50: '#fffdf7',
-          100: '#faf5e7',
-          200: '#f3ead3',
-          300: '#e9dcc0',
-          400: '#d8c7a2',
+          50: 'var(--card-bg)',
+          100: 'var(--paper)',
+          200: 'var(--soft-paper-strong)',
+          300: 'var(--soft-border)',
+          400: 'var(--card-border)',
         },
         ink: {
-          DEFAULT: '#234e8b',
-          light: '#3a6db3',
-          soft: '#6d90c2',
-          deep: '#173763',
+          DEFAULT: 'var(--ink-mid)',
+          light: 'var(--ink-soft)',
+          soft: 'var(--ink-soft)',
+          deep: 'var(--ink-deep)',
         },
         pencil: {
-          DEFAULT: '#c8544a',
+          DEFAULT: 'var(--pencil)',
           soft: '#e59d95',
         },
         leaf: {
-          DEFAULT: '#2f6f52',
+          DEFAULT: 'var(--ink-mid)',
           soft: '#8db7a2',
         },
         marigold: '#e9a23b',
+        slate: {
+          800: 'var(--text-slate-800)',
+          700: 'var(--text-slate-700)',
+          600: 'var(--text-slate-600)',
+          500: 'var(--text-slate-500)',
+          400: 'var(--text-slate-400)',
+        },
       },
       fontFamily: {
         hand: ['Caveat', 'Hind Siliguri', 'cursive'],
