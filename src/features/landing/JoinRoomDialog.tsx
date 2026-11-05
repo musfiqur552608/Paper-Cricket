@@ -71,14 +71,14 @@ export function JoinRoomDialog({ open, onClose }: { open: boolean; onClose: () =
             autoFocus
             aria-describedby="room-code-hint"
           />
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-ink/35" size={20} />
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-ink/35 dark:text-slate-400" size={20} />
         </div>
         <p id="room-code-hint" className="mt-2 text-[11.5px] leading-snug text-slate-500">
           {t('join.codeHint')}
         </p>
 
         {error ? (
-          <div className="mt-3 flex gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12.5px] text-red-800" role="alert">
+          <div className="mt-3 flex gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12.5px] text-red-800 dark:border-red-500/40 dark:bg-red-950/60 dark:text-red-200" role="alert">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>

@@ -30,9 +30,10 @@ export function ErrorSheet({
   const { t } = useTranslation()
   return (
     <div className="mx-auto flex min-h-[60dvh] max-w-md flex-col items-center justify-center px-5 text-center">
-      <div className="paper-card w-full rounded-3xl p-6">
-        <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-red-50 text-red-500">
-          <AlertCircle size={23} />
+      <div className="paper-card w-full rounded-3xl p-6 animate-pop">
+        <div className="mx-auto mb-4 relative grid h-12 w-12 place-items-center rounded-full bg-red-50 text-red-500 dark:bg-red-950/60 dark:text-red-300">
+          <span className="absolute inset-0 animate-ping rounded-full bg-red-400/20" />
+          <AlertCircle size={23} className="relative" />
         </div>
         <h1 className="font-hand text-3xl font-bold text-ink-deep">{title}</h1>
         {body ? <p className="mt-2 text-sm leading-relaxed text-slate-500">{body}</p> : null}

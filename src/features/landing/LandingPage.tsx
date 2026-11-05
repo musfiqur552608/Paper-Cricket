@@ -49,9 +49,12 @@ export function LandingPage() {
               initial={reducedMotion ? false : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#d8c7a2] bg-paper-50/75 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.16em] text-slate-500 shadow-sm"
+              className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#d8c7a2] bg-paper-50/75 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.16em] text-slate-500 shadow-sm dark:border-slate-600/40 dark:bg-white/10 dark:text-slate-300"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-leaf" />
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-leaf opacity-60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-leaf" />
+              </span>
               {t('landing.badge')}
             </motion.div>
 
@@ -117,9 +120,11 @@ export function LandingPage() {
             ) : null}
           </div>
 
-          <div className="relative mx-auto w-full max-w-[470px] px-2 md:max-w-none md:px-5">
-            <div className="absolute inset-[8%] -z-10 rotate-3 rounded-[40%] bg-[#eadcc0]/50 blur-2xl" />
-            <DoodleBoard />
+          <div className="relative mx-auto w-full max-w-[470px] px-2 md:max-w-none md:px-5 animate-breathe">
+            <div className="absolute inset-[8%] -z-10 rotate-3 rounded-[40%] bg-[#eadcc0]/50 blur-2xl dark:bg-blue-500/20" />
+            <div className="relative drop-shadow-[0_18px_28px_-16px_rgba(23,55,99,.35)] dark:drop-shadow-[0_18px_28px_-12px_rgba(0,0,0,.8)]">
+              <DoodleBoard />
+            </div>
           </div>
         </section>
 
@@ -139,6 +144,11 @@ export function LandingPage() {
             <div className="absolute bottom-5 right-8 hidden rotate-[-7deg] font-hand text-[15px] text-ink/30 sm:block">
               {t('landing.backPage')}
             </div>
+            <div className="absolute inset-0 pointer-events-none">
+              <span className="absolute top-6 left-6 inline-block h-1.5 w-1.5 rounded-full bg-marigold/40" />
+              <span className="absolute top-10 left-14 inline-block h-1 w-1 rounded-full bg-ink/20" />
+              <span className="absolute bottom-8 left-10 inline-block h-1 w-1 rounded-full bg-pencil/30" />
+            </div>
 
             <div className="grid gap-8 md:grid-cols-[.9fr_1.1fr] md:gap-12">
               <div>
@@ -153,13 +163,13 @@ export function LandingPage() {
                   </p>
                 </div>
                 <svg viewBox="0 0 250 130" fill="none" className="mt-4 w-full max-w-[260px]" aria-hidden="true">
-                  <path d="M30 100 C74 84 136 106 218 82" stroke="#234e8b" strokeWidth="1.8" strokeLinecap="round" opacity=".22" />
-                  <circle cx="74" cy="52" r="30" stroke="#234e8b" strokeWidth="2" />
-                  <path d="M74 52 L74 23 M74 52 L96 36 M74 52 L96 68 M74 52 L74 81 M74 52 L52 68 M74 52 L52 36" stroke="#234e8b" strokeWidth="1.2" strokeLinecap="round" opacity=".55" />
-                  <text x="70" y="55" fontSize="12" fontFamily="Caveat" fill="#234e8b">6</text>
+                  <path d="M30 100 C74 84 136 106 218 82" stroke="currentColor" className="text-ink/20" strokeWidth="1.8" strokeLinecap="round" />
+                  <circle cx="74" cy="52" r="30" className="text-ink" stroke="currentColor" strokeWidth="2" />
+                  <path d="M74 52 L74 23 M74 52 L96 36 M74 52 L96 68 M74 52 L74 81 M74 52 L52 68 M74 52 L52 36" className="text-ink/60" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                  <text x="70" y="55" fontSize="12" fontFamily="Caveat" className="fill-ink">6</text>
                   <path d="M136 88 C138 64 142 48 157 30" stroke="#c8544a" strokeWidth="2.4" strokeLinecap="round" />
                   <path d="M147 34 L158 28 L158 41" stroke="#c8544a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-                  <text x="154" y="112" fontSize="16" fontFamily="Caveat" fill="#234e8b" opacity=".65">{t('landing.nib')}</text>
+                  <text x="154" y="112" fontSize="16" fontFamily="Caveat" className="fill-ink/75">{t('landing.nib')}</text>
                   <path d="M112 52 q18 -14 34 -6" stroke="#c8544a" strokeWidth="1.2" strokeDasharray="2 4" />
                 </svg>
               </div>
@@ -196,7 +206,7 @@ export function LandingPage() {
                 key={n}
                 {...fadeUp}
                 transition={{ ...(fadeUp.transition ?? {}), delay: index * 0.07 }}
-                className="paper-card group relative overflow-hidden rounded-2xl p-5 transition-transform hover:-translate-y-1"
+                className="paper-card paper-card-hover group relative overflow-hidden rounded-2xl p-5"
               >
                 <span className="absolute right-3 top-1 font-hand text-[44px] font-bold text-ink/10">{n}</span>
                 <span className={`mb-4 grid h-11 w-11 place-items-center rounded-full border border-current/20 bg-white/60 ${color}`}>
@@ -216,7 +226,7 @@ export function LandingPage() {
 
         {/* ── Details ────────────────────────────────────────────────── */}
         <section className="relative mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6 md:pb-24">
-          <div className="absolute inset-x-8 top-10 -z-10 h-[80%] rounded-[40%] bg-[#e6d6b8]/45 blur-3xl" />
+          <div className="absolute inset-x-8 top-10 -z-10 h-[80%] rounded-[40%] bg-[#e6d6b8]/45 blur-3xl dark:bg-blue-500/10" />
           <motion.div {...fadeUp} className="grid gap-4 md:grid-cols-3">
             {[
               { Icon: Users, title: t('landing.detail1'), body: t('landing.detail1Body') },
@@ -237,13 +247,17 @@ export function LandingPage() {
 
         {/* ── Invite band ────────────────────────────────────────────── */}
         <section className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
-          <motion.div {...fadeUp} className="relative overflow-hidden rounded-[26px] bg-ink px-6 py-9 text-paper-50 shadow-[0_25px_50px_-24px_rgba(23,55,99,.6)] sm:px-10 sm:py-11">
+          <motion.div {...fadeUp} className="relative overflow-hidden rounded-[26px] bg-ink px-6 py-9 text-paper-50 shadow-[0_25px_50px_-24px_rgba(23,55,99,.6)] sm:px-10 sm:py-11 dark:bg-gradient-to-br dark:from-[#1e3a5f] dark:to-[#0b1626] dark:shadow-none dark:ring-1 dark:ring-slate-700/60">
             <div className="absolute inset-0 opacity-[0.13]" style={{ backgroundImage: 'repeating-linear-gradient(to bottom, transparent 0, transparent 31px, #fff 31px, #fff 32px)' }} />
-            <svg viewBox="0 0 350 350" className="pointer-events-none absolute -right-16 -top-20 h-[340px] w-[340px] text-white/10" fill="none" aria-hidden="true">
+            <svg viewBox="0 0 350 350" className="pointer-events-none absolute -right-16 -top-20 h-[340px] w-[340px] text-white/10 animate-spin [animation-duration:26s] motion-reduce:animate-none" fill="none" aria-hidden="true">
               <circle cx="175" cy="175" r="140" stroke="currentColor" strokeWidth="2" />
               <circle cx="175" cy="175" r="110" stroke="currentColor" strokeWidth="1" strokeDasharray="3 6" />
               <path d="M175 175 L175 50 M175 175 L282 113 M175 175 L282 237 M175 175 L175 300 M175 175 L68 237 M175 175 L68 113" stroke="currentColor" strokeWidth="1.4" />
               <circle cx="175" cy="175" r="13" stroke="currentColor" strokeWidth="2" />
+            </svg>
+            <svg viewBox="0 0 350 350" className="pointer-events-none absolute -left-24 -bottom-24 h-[280px] w-[280px] text-white/[0.06] animate-spin [animation-duration:38s] [animation-direction:reverse] motion-reduce:animate-none" fill="none" aria-hidden="true">
+              <circle cx="175" cy="175" r="150" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="175" cy="175" r="95" stroke="currentColor" strokeWidth="1" strokeDasharray="2 7" />
             </svg>
             <div className="relative z-10 max-w-2xl">
               <p className="mb-2 flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.22em] text-paper-300/80">

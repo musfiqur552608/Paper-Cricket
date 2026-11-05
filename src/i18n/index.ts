@@ -638,6 +638,13 @@ const en = {
     toggleOn: 'Turn sound on',
     toggleOff: 'Turn sound off',
   },
+  colorMode: {
+    label: 'Appearance',
+    light: 'Light',
+    dark: 'Dark',
+    auto: 'Auto',
+    current: 'Current: {{mode}}',
+  },
   reducedMotion: {
     label: 'Reduce motion',
     on: 'Motion reduced',
@@ -1281,6 +1288,13 @@ const bn: typeof en = {
   audio: {
     toggleOn: 'আওয়াজ চালু করো',
     toggleOff: 'আওয়াজ বন্ধ করো',
+  },
+  colorMode: {
+    label: 'চেহারা',
+    light: 'হালকা',
+    dark: 'গাঢ়',
+    auto: 'অটো',
+    current: 'বর্তমান: {{mode}}',
   },
   reducedMotion: {
     label: 'কম অ্যানিমেশন',

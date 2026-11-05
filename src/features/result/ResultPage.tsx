@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import type { BallDTO, InningsDTO, MatchSnapshot, PlayerDTO } from '../../types/game'
 import { Logo } from '../../components/ui/Logo'
-import { LanguageToggle, SoundToggle } from '../../components/ui/Toggles'
+import { LanguageToggle, SoundToggle, ColorModeToggle } from '../../components/ui/Toggles'
 import { LeaveConfirmDialog } from '../../components/ui/LeaveConfirmDialog'
 import { Dialog } from '../../components/ui/Dialog'
 import { PlayerAvatar } from '../../components/game/PlayerAvatar'
@@ -146,7 +146,7 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
     return toPng(exportRef.current, {
       pixelRatio,
       cacheBust: true,
-      backgroundColor: '#faf5e7',
+      backgroundColor: document.documentElement.classList.contains('dark') ? '#101a2e' : '#faf5e7',
     })
   }
 
@@ -159,7 +159,7 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
       pixelRatio,
       quality,
       cacheBust: true,
-      backgroundColor: '#faf5e7',
+      backgroundColor: document.documentElement.classList.contains('dark') ? '#101a2e' : '#faf5e7',
     })
   }
 
@@ -262,16 +262,17 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-40 border-b border-[#d8c7a2]/60 bg-paper-50/90 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-md shadow-[0_1px_12px_-6px_rgba(23,55,99,.18)] dark:shadow-none">
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-2 px-3 sm:px-5">
           <Logo compact link={false} />
-          <span className="hidden rounded-md border border-[#d8c7a2] bg-white/65 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-[0.16em] text-ink sm:inline-block">
+          <span className="hidden rounded-md border border-[#d8c7a2] bg-white/65 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-[0.16em] text-ink sm:inline-block dark:border-slate-600/40 dark:bg-white/10">
             {room.code}
           </span>
           <span className="hidden items-center gap-1 rounded-full border border-leaf/20 bg-leaf/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-leaf sm:inline-flex">
             <Check size={10} /> {abandoned ? t('match.abandonedWinner') : t('common.finished')}
           </span>
           <div className="ml-auto flex items-center gap-1.5">
+            <ColorModeToggle />
             <LanguageToggle compact />
             <SoundToggle />
             <button
@@ -305,12 +306,12 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className={clsx(
-            'relative mb-4 overflow-hidden rounded-[26px] border px-5 py-6 shadow-desk sm:px-8 sm:py-7',
+            'relative mb-4 overflow-hidden rounded-[26px] border px-5 py-6 shadow-desk sm:px-8 sm:py-7 dark:shadow-none dark:backdrop-blur-0',
             isWinner && !tied
-              ? 'border-leaf/30 bg-[#eaf4ec]'
+              ? 'border-leaf/30 bg-[#eaf4ec] dark:border-leaf/40 dark:bg-[#12261c]/85'
               : tied
-                ? 'border-[#d8c7a2] bg-paper-50'
-                : 'border-ink/15 bg-[#edf3fd]',
+                ? 'border-[#d8c7a2] bg-paper-50 dark:border-slate-600/40 dark:bg-[#101a2e]/85'
+                : 'border-ink/15 bg-[#edf3fd] dark:border-slate-600/40 dark:bg-[#101a2e]/85',
           )}
         >
           {isWinner && !reduced ? <ConfettiBurst burstKey={`result-${room.id}`} intense /> : null}

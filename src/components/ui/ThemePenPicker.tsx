@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import type { PenStyleId, PaperThemeId } from '../../types/game'
 import { PAPER_THEMES, PEN_STYLES, getPaperTheme, getPenStyle } from '../../config/themes'
 import { Pen3D } from '../board/Pen3D'
+import { ColorModeControl } from './Toggles'
 import { useThemePrefs } from '../../store/preferences'
 import { sound, haptic } from '../../lib/sound'
 import { updatePlayerTheme } from '../../lib/supabase/api'
@@ -114,11 +115,11 @@ export function ThemePenPicker({
       />
       <div
         className={clsx(
-          'paper-card relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-b-none shadow-desk sm:rounded-[26px] sm:max-w-2xl',
+          'paper-card paper-card-hover relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-b-none shadow-desk sm:rounded-[26px] sm:max-w-2xl',
           'animate-in fade-in slide-in-from-top-4 duration-300',
         )}
       >
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-ink/25 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-ink/25 to-transparent dark:via-white/15" />
         <header className="flex items-start justify-between gap-4 px-5 pb-3 pt-5 sm:px-7 sm:pt-6">
           <div>
             <p className="mb-1 flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.22em] text-pencil">
@@ -127,6 +128,9 @@ export function ThemePenPicker({
             <h2 id="theme-picker-title" className="font-hand text-[34px] font-bold leading-[1.05] text-ink-deep sm:text-[38px]">
               {t('theme.picker.pickYourLook')}
             </h2>
+            <div className="mt-2">
+              <ColorModeControl />
+            </div>
           </div>
           <button
             type="button"
@@ -252,7 +256,7 @@ export function ThemePenPicker({
             </section>
 
             {/* Live preview */}
-            <section className="rounded-xl border border-[#d8c7a2]/50 bg-[#fffdf6]/40 p-4">
+            <section className="rounded-xl border border-[#d8c7a2]/50 bg-[#fffdf6]/40 p-4 dark:border-slate-600/35 dark:bg-white/10">
               <div className="flex flex-col items-center gap-4 sm:flex-row">
                 <div
                   className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border border-ink/20 shadow-sm"
@@ -274,7 +278,7 @@ export function ThemePenPicker({
                   </p>
                   <p className="mt-0.5 text-[10px] text-slate-500">{penStyle.name}</p>
                 </div>
-                <div className="w-full flex-shrink-0 rounded-lg border border-[#d8c7a2]/40 bg-white/60 px-2 py-1 sm:w-44">
+                <div className="w-full flex-shrink-0 rounded-lg border border-[#d8c7a2]/40 bg-white/60 px-2 py-1 sm:w-44 dark:border-slate-600/35 dark:bg-white/10">
                   <Pen3D className="h-10 w-full" style={penStyle} />
                 </div>
               </div>

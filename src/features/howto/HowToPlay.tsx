@@ -37,9 +37,9 @@ export function HowToPlay({ open, onClose }: { open: boolean; onClose: () => voi
           { n: 3, title: t('how.step3Title'), body: t('how.step3Body'), Icon: PenLine },
           { n: 4, title: t('how.step4Title'), body: t('how.step4Body'), Icon: BookOpen },
         ].map(({ n, title, body, Icon }) => (
-          <div key={n} className="rounded-2xl border border-[#e1d3b8] bg-white/55 p-3.5">
+          <div key={n} className="rounded-2xl border border-[#e1d3b8] bg-white/55 p-3.5 dark:border-slate-600/35 dark:bg-white/10">
             <div className="mb-2 flex items-center gap-2">
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-ink/10 text-ink">
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-ink/10 text-ink dark:bg-white/10">
                 <Icon size={15} />
               </span>
               <span className="font-hand text-[22px] font-bold leading-none text-ink-deep">{n}. {title}</span>
@@ -49,7 +49,7 @@ export function HowToPlay({ open, onClose }: { open: boolean; onClose: () => voi
         ))}
       </div>
 
-      <div className="mt-5 rounded-2xl border border-ink/20 bg-[#edf3fd] p-4">
+      <div className="mt-5 rounded-2xl border border-ink/20 bg-[#edf3fd] p-4 dark:border-slate-600/40 dark:bg-white/10">
         <h3 className="flex items-center gap-2 font-hand text-[25px] font-bold text-ink-deep">
           <Sparkles size={18} className="text-marigold" />
           {t('how.fairnessTitle')}
@@ -69,8 +69,8 @@ export function HowToPlay({ open, onClose }: { open: boolean; onClose: () => voi
           { title: t('how.wicketsTitle'), body: t('how.wicketsBody'), code: 'CO · Lbw · RO · BO' },
           { title: t('how.freeHitTitle'), body: t('how.freeHitBody'), code: 'FH' },
         ].map((item) => (
-          <div key={item.code} className="flex gap-3 rounded-xl border border-[#e5d8c0] bg-paper-50/70 px-3 py-2.5">
-            <span className="grid min-w-12 place-items-center rounded-lg border border-ink/20 bg-white px-2 font-hand text-lg font-bold text-ink">
+          <div key={item.code} className="flex gap-3 rounded-xl border border-[#e5d8c0] bg-paper-50/70 px-3 py-2.5 dark:border-slate-600/35 dark:bg-white/10">
+            <span className="grid min-w-12 place-items-center rounded-lg border border-ink/20 bg-white px-2 font-hand text-lg font-bold text-ink dark:bg-white/10">
               {item.code}
             </span>
             <div>
@@ -116,12 +116,12 @@ export function DoodleBoard() {
         <Board
           rotation={rotation}
           transitionMs={spinning && !reduced ? 2400 : 0}
-          className="drop-shadow-[0_28px_38px_rgba(69,54,24,.2)]"
+          className="drop-shadow-[0_28px_38px_rgba(69,54,24,.2)] dark:drop-shadow-[0_28px_38px_rgba(0,0,0,.8)]"
         />
         <button
           type="button"
           onClick={spin}
-          className="absolute bottom-[7%] left-1/2 -translate-x-1/2 rounded-full border border-ink/25 bg-paper-50/95 px-4 py-2 font-hand text-lg font-bold text-ink shadow-paper transition hover:-rotate-1 hover:bg-white"
+          className="absolute bottom-[7%] left-1/2 -translate-x-1/2 rounded-full border border-ink/25 bg-paper-50/95 px-4 py-2 font-hand text-lg font-bold text-ink shadow-paper transition hover:-rotate-1 hover:bg-white dark:border-slate-600/40 dark:bg-white/10 dark:hover:bg-white/15"
           aria-label={t('how.spinLabel')}
         >
           <span className="flex items-center gap-1.5">
@@ -141,7 +141,7 @@ export function DoodleBoard() {
           {t('how.wedges', { count: BOARD_SEGMENTS.length })}
         </text>
       </svg>
-      <div className="pointer-events-none absolute -bottom-3 -left-2 rotate-[-4deg] rounded-sm border border-[#d8c7a2] bg-[#f5efdc] px-2.5 py-1 font-hand text-sm text-slate-500 shadow-sm">
+      <div className="pointer-events-none absolute -bottom-3 -left-2 rotate-[-4deg] rounded-sm border border-[#d8c7a2] bg-[#f5efdc] px-2.5 py-1 font-hand text-sm text-slate-500 shadow-sm dark:border-slate-600/40 dark:bg-[#101a2e] dark:text-slate-400">
         {t('common.appName')} · no. 04
       </div>
     </div>

@@ -2,12 +2,58 @@ import { create } from 'zustand'
 import type { PenStyleId, PaperThemeId } from '../config/themes'
 import { DEFAULT_PAPER_THEME, DEFAULT_PEN_STYLE, isPenStyleId, isPaperThemeId } from '../config/themes'
 
+/**
+ * Colour mode: 'light', 'dark' or 'auto' (follow the device).
+ * Stored in localStorage; the resolved value flips a `.dark` class on <html>
+ * which Tailwind's `dark:` variant keys off.
+ */
+export type ColorMode = 'light' | 'dark' | 'auto'
+
+export function isColorMode(value: unknown): value is ColorMode {
+  return value === 'light' || value === 'dark' || value === 'auto'
+}
+
+const COLOR_MODE_KEY = 'pc.colorMode'
+
+export function readColorMode(): ColorMode {
+  try {
+    const raw = window.localStorage.getItem(COLOR_MODE_KEY)
+    return isColorMode(raw) ? raw : 'auto'
+  } catch {
+    return 'auto'
+  }
+}
+
+export function applyColorMode(mode: ColorMode) {
+  if (typeof document === 'undefined') return
+  const systemDark =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  const resolved = mode === 'auto' ? (systemDark ? 'dark' : 'light') : mode
+  document.documentElement.classList.toggle('dark', resolved === 'dark')
+  document.documentElement.dataset.colorMode = resolved
+  const meta = document.querySelector('meta[name="theme-color"]')
+  if (meta) meta.setAttribute('content', resolved === 'dark' ? '#0b0f1a' : '#faf5e7')
+}
+
+export function persistColorMode(mode: ColorMode) {
+  try {
+    window.localStorage.setItem(COLOR_MODE_KEY, mode)
+  } catch {
+    // storage blocked; mode still applies for this session
+  }
+}
+
 interface PreferencesState {
   muted: boolean
   reducedMotion: boolean
+  colorMode: ColorMode
   setMuted: (muted: boolean) => void
   toggleMuted: () => void
   setReducedMotion: (value: boolean) => void
+  setColorMode: (mode: ColorMode) => void
+  cycleColorMode: () => void
 }
 
 function readBoolean(key: string, fallback: boolean): boolean {
@@ -35,19 +81,42 @@ function save(key: string, value: boolean) {
   }
 }
 
-export const usePreferences = create<PreferencesState>((set, get) => ({
-  muted: readBoolean('pc.muted', false),
-  reducedMotion: readBoolean('pc.reduceMotion', false),
-  setMuted: (muted) => {
-    save('pc.muted', muted)
-    set({ muted })
-  },
-  toggleMuted: () => get().setMuted(!get().muted),
-  setReducedMotion: (reducedMotion) => {
-    save('pc.reduceMotion', reducedMotion)
-    set({ reducedMotion })
-  },
-}))
+export const usePreferences = create<PreferencesState>((set, get) => {
+  const initialMode = readColorMode()
+  applyColorMode(initialMode)
+  const systemMedia: MediaQueryList | null =
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-color-scheme: dark)')
+      : null
+  // Keep 'auto' honest when the OS flips between light and dark.
+  systemMedia?.addEventListener?.('change', () => {
+    if (get().colorMode === 'auto') applyColorMode('auto')
+  })
+  return {
+    muted: readBoolean('pc.muted', false),
+    reducedMotion: readBoolean('pc.reduceMotion', false),
+    colorMode: initialMode,
+    setMuted: (muted) => {
+      save('pc.muted', muted)
+      set({ muted })
+    },
+    toggleMuted: () => get().setMuted(!get().muted),
+    setReducedMotion: (reducedMotion) => {
+      save('pc.reduceMotion', reducedMotion)
+      set({ reducedMotion })
+    },
+    setColorMode: (colorMode) => {
+      persistColorMode(colorMode)
+      applyColorMode(colorMode)
+      set({ colorMode })
+    },
+    cycleColorMode: () => {
+      const order: ColorMode[] = ['light', 'auto', 'dark']
+      const next = order[(order.indexOf(get().colorMode) + 1) % order.length] ?? 'light'
+      get().setColorMode(next)
+    },
+  }
+})
 
 /**
  * Theme & pen preferences stored per-user locally and synced to a room.

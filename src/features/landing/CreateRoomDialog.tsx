@@ -96,7 +96,7 @@ export function CreateRoomDialog({ open, onClose }: { open: boolean; onClose: ()
       <p className="-mt-2 mb-5 text-sm leading-relaxed text-slate-600">{t('create.subtitle')}</p>
 
       {!IS_SUPABASE_CONFIGURED ? (
-        <div className="mb-4 flex gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-[12.5px] leading-relaxed text-amber-900">
+        <div className="mb-4 flex gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-[12.5px] leading-relaxed text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/60 dark:text-amber-200">
           <AlertCircle size={17} className="mt-0.5 shrink-0" />
           <div>
             <p className="font-semibold">{t('errors.notConfiguredTitle')}</p>
@@ -135,10 +135,10 @@ export function CreateRoomDialog({ open, onClose }: { open: boolean; onClose: ()
           />
         </div>
 
-        <div className="rounded-xl border border-[#e1d3b8] bg-white/45 px-3 py-3">
+        <div className="rounded-xl border border-[#e1d3b8] bg-white/45 px-3 py-3 dark:border-slate-600/35 dark:bg-white/10">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{t('create.matchSetup')}</p>
-            <span className="chip border-ink/15 bg-ink/[0.055] text-ink/70">
+            <span className="chip border-ink/15 bg-ink/[0.055] text-ink/70 dark:border-slate-600/35 dark:bg-white/10 dark:text-slate-300">
               {t('create.playersFromWickets', { count: wickets })}
             </span>
           </div>
@@ -166,7 +166,7 @@ export function CreateRoomDialog({ open, onClose }: { open: boolean; onClose: ()
         </div>
 
         {error ? (
-          <div className="flex gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12.5px] text-red-800" role="alert">
+          <div className="flex gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12.5px] text-red-800 dark:border-red-500/40 dark:bg-red-950/60 dark:text-red-200" role="alert">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>

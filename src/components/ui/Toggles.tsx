@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
-import { Languages, Volume2, VolumeX, Sparkles, Zap } from 'lucide-react'
+import { Languages, Volume2, VolumeX, Sparkles, Zap, Moon, Sun, Contrast } from 'lucide-react'
 import { sound } from '../../lib/sound'
-import { usePreferences } from '../../store/preferences'
+import { usePreferences, type ColorMode } from '../../store/preferences'
 import clsx from 'clsx'
 
 export function LanguageToggle({ compact = false }: { compact?: boolean }) {
@@ -21,7 +21,7 @@ export function LanguageToggle({ compact = false }: { compact?: boolean }) {
 
   return (
     <div
-      className="flex items-center rounded-full border border-[#d3c2a0] bg-paper-50/80 p-0.5 shadow-sm"
+      className="flex items-center rounded-full border border-[#d3c2a0] bg-paper-50/80 p-0.5 shadow-sm dark:border-slate-600/40 dark:bg-white/10"
       role="group"
       aria-label={t('common.language')}
     >
@@ -36,7 +36,7 @@ export function LanguageToggle({ compact = false }: { compact?: boolean }) {
             aria-pressed={active}
             className={clsx(
               'rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wide transition',
-              active ? 'bg-ink text-white shadow-sm' : 'text-slate-600 hover:bg-ink/5',
+              active ? 'bg-ink text-white shadow-sm' : 'text-slate-600 hover:bg-ink/5 dark:text-slate-300 dark:hover:bg-white/10',
             )}
           >
             {language === 'bn' ? 'বাংলা' : 'EN'}
@@ -64,10 +64,73 @@ export function SoundToggle() {
       aria-label={muted ? t('audio.toggleOn') : t('audio.toggleOff')}
       aria-pressed={!muted}
       title={muted ? t('common.unmute') : t('common.mute')}
-      className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#d3c2a0] bg-paper-50/80 text-ink shadow-sm transition hover:bg-white"
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#d3c2a0] bg-paper-50/80 text-ink shadow-sm transition hover:bg-white dark:border-slate-600/40 dark:bg-white/10 dark:hover:bg-white/15"
     >
       {muted ? <VolumeX size={17} /> : <Volume2 size={17} />}
     </button>
+  )
+}
+
+export function ColorModeIcon({ mode, size = 16 }: { mode: ColorMode; size?: number }) {
+  const motionOff = usePreferences((state) => state.reducedMotion)
+  if (mode === 'light') return <Sun size={size} />
+  if (mode === 'dark') return <Moon size={size} />
+  return (
+    <span className={clsx('relative grid place-items-center', motionOff ? '' : 'animate-spin [animation-duration:9s]')} aria-hidden="true">
+      <Contrast size={size} />
+    </span>
+  )
+}
+
+export function ColorModeToggle() {
+  const { t } = useTranslation()
+  const mode = usePreferences((state) => state.colorMode)
+  const cycleColorMode = usePreferences((state) => state.cycleColorMode)
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        cycleColorMode()
+        sound.click()
+      }}
+      aria-label={`${t('colorMode.label')}: ${t(`colorMode.${mode}`)}`}
+      title={`${t('colorMode.label')}: ${t(`colorMode.${mode}`)}`}
+      aria-pressed={mode === 'dark'}
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#d3c2a0] bg-paper-50/80 text-ink shadow-sm transition hover:bg-white dark:border-slate-600/40 dark:bg-white/10 dark:hover:bg-white/15"
+    >
+      <ColorModeIcon mode={mode} />
+    </button>
+  )
+}
+
+export function ColorModeControl() {
+  const { t } = useTranslation()
+  const mode = usePreferences((state) => state.colorMode)
+  const setColorMode = usePreferences((state) => state.setColorMode)
+  const options: ColorMode[] = ['light', 'dark', 'auto']
+  return (
+    <div className="flex items-center rounded-full border border-[#d3c2a0] bg-paper-50/80 p-0.5 shadow-sm dark:border-slate-600/40 dark:bg-white/10" role="group" aria-label={t('colorMode.label')}>
+      {options.map((option) => {
+        const active = option === mode
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => {
+              setColorMode(option)
+              sound.click()
+            }}
+            aria-pressed={active}
+            className={clsx(
+              'rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wide transition',
+              active ? 'bg-ink text-white shadow-sm' : 'text-slate-600 hover:bg-ink/5 dark:text-slate-300 dark:hover:bg-white/10',
+            )}
+          >
+            {t(`colorMode.${option}`)}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -79,7 +142,7 @@ export function MotionToggle() {
     <button
       type="button"
       onClick={() => setReducedMotion(!reducedMotion)}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#ded0b6] bg-white/50 px-3 py-2.5 text-left text-sm text-slate-700 transition hover:bg-white"
+      className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#ded0b6] bg-white/50 px-3 py-2.5 text-left text-sm text-slate-700 transition hover:bg-white dark:border-slate-600/40 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
       aria-pressed={reducedMotion}
     >
       <span className="flex items-center gap-2">

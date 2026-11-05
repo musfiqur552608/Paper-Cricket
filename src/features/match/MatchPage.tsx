@@ -62,6 +62,14 @@ function sleep(ms: number) {
 export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, refresh, onLeave }: MatchProps) {
   const { t } = useTranslation()
   const reducedPref = usePreferences((state) => state.reducedMotion)
+  const colorMode = usePreferences((state) => state.colorMode)
+  const systemDark = usePreferences(
+    (state: { colorMode: string }) =>
+      (state.colorMode === 'auto' &&
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches) ||
+      state.colorMode === 'dark',
+  )
   const paperThemeId = useThemePrefs((state) => state.paperThemeId)
   const themeConfigured = useThemePrefs((state) => state.configured)
   const setThemePrefs = useThemePrefs((state) => state.setThemePrefs)
@@ -103,15 +111,13 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
   const themePromptedRef = useRef(false)
   const themeAdoptedRef = useRef(false)
 
+  const dark = colorMode === 'auto' ? systemDark : colorMode === 'dark'
   const activeSpin = view.activeSpin ?? localSpin
   const effectiveSpin =
     activeSpin && localStop?.spinId === activeSpin.id
       ? { ...activeSpin, endsAt: localStop.endsAt, aimDeadline: localStop.aimDeadline }
       : activeSpin
   const spinEndsMs = effectiveSpin ? Date.parse(effectiveSpin.endsAt) : 0
-  // The room stays in `spinning` on the server until an aim is submitted.
-  // Every client (including one that reconnects mid-spin) must derive the
-  // aiming phase from the shared end time instead of waiting for a phase write.
   let phase = view.phase
   if ((view.phase === 'ready' || view.phase === 'spinning') && effectiveSpin) {
     phase = now < spinEndsMs ? 'spinning' : 'aiming'
@@ -476,7 +482,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-40 border-b border-[#d8c7a2]/60 bg-paper-50/90 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-md shadow-[0_1px_12px_-6px_rgba(23,55,99,.18)] dark:shadow-none">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-3 sm:px-5">
           <div className="hidden min-[410px]:block">
             <Logo compact link={false} />
@@ -487,7 +493,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
           <div className="hidden h-6 w-px bg-ink/10 min-[520px]:block" />
           <div className="hidden items-center gap-1.5 min-[520px]:flex">
             <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">{t('common.room')}</span>
-            <span className="rounded-md border border-[#d8c7a2] bg-white/65 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-[0.16em] text-ink">
+            <span className="rounded-md border border-[#d8c7a2] bg-white/65 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-[0.16em] text-ink dark:border-slate-600/40 dark:bg-white/10">
               {room.code}
             </span>
           </div>
@@ -498,7 +504,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
             <button
               type="button"
               onClick={() => setStyleOpen(true)}
-              className="grid h-9 w-9 place-items-center rounded-full border border-[#d3c2a0] bg-paper-50/80 text-slate-500 transition hover:bg-white hover:text-pencil"
+              className="grid h-9 w-9 place-items-center rounded-full border border-[#d3c2a0] bg-paper-50/80 text-slate-500 transition hover:bg-white hover:text-pencil dark:border-slate-600/40 dark:bg-white/10 dark:hover:bg-white/15"
               aria-label={t('theme.picker.title')}
               title={t('theme.picker.title')}
             >
@@ -558,7 +564,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
 
             <div className="relative mx-auto mt-3 w-full max-w-[540px]">
               {/* faint chalk marks behind the board */}
-              <div className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-full bg-[#e9dcc0]/40 blur-2xl" />
+              <div className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-full bg-[#e9dcc0]/40 blur-2xl dark:bg-blue-500/10" />
               <div
                 key={revealedBall?.isWicket ? `shake-${revealedBall.id}` : 'board'}
                 className={clsx('relative', revealedBall?.isWicket && phase === 'reveal' && 'animate-shake')}
@@ -571,7 +577,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
                   penAtEnd={Boolean(revealedBall)}
                   revealed={Boolean(revealedBall)}
                   compact
-                  theme={getPaperTheme(paperThemeId)}
+                  theme={getPaperTheme(dark && paperThemeId === 'notebook' ? 'midnight' : paperThemeId)}
                 />
                 {isBowler && phase === 'ready' && batterReady && !commitBusy ? (
                   <BoardSpinControl
@@ -1022,22 +1028,22 @@ function MatchSideInfo({
   const { t } = useTranslation()
   const innings = view.innings
   return (
-    <div className="paper-card rounded-2xl p-3.5">
+    <div className="paper-card paper-card-hover rounded-2xl p-3.5">
       <div className="flex items-center gap-2">
         <PlayerAvatar name={view.opponent?.name ?? '?'} slot={view.opponent?.slot ?? 2} size="sm" />
         <div className="min-w-0">
-          <p className="truncate text-[11.5px] font-semibold text-slate-700">{onlineText}</p>
+          <p className="truncate text-[11.5px] font-semibold text-slate-700 dark:text-slate-200">{onlineText}</p>
           <p className="text-[9px] text-slate-400">
             {opponentOnline ? t('lobby.online') : t('lobby.offline')} · {view.opponent?.teamName}
           </p>
         </div>
-        <span className={clsx('ml-auto h-2 w-2 rounded-full', opponentOnline ? 'bg-leaf' : 'bg-slate-300')} />
+        <span className={clsx('ml-auto h-2 w-2 rounded-full', opponentOnline ? 'bg-leaf' : 'bg-slate-300 dark:bg-slate-600')} />
       </div>
       <div className="my-3 border-t border-dashed border-ink/12" />
       <div className="grid grid-cols-2 gap-1.5">
         <div className="stat-box">
           <p className="text-[8.5px] uppercase tracking-wide text-slate-400">{t('common.overs')}</p>
-          <p className="font-hand text-xl font-bold leading-tight text-ink-deep">{innings ? formatOvers(innings.legalBalls) : '0.0'}</p>
+          <p className="font-hand text-xl font-bold leading-tight text-ink-deep tabular-nums">{innings ? formatOvers(innings.legalBalls) : '0.0'}</p>
         </div>
         <div className="stat-box">
           <p className="text-[8.5px] uppercase tracking-wide text-slate-400">{t('common.superOver')}</p>
@@ -1047,13 +1053,13 @@ function MatchSideInfo({
         </div>
         <div className="stat-box">
           <p className="text-[8.5px] uppercase tracking-wide text-slate-400">{t('common.freeHit')}</p>
-          <p className="font-hand text-xl font-bold leading-tight text-pencil">
+          <p className="font-hand text-xl font-bold leading-tight text-pencil tabular-nums">
             {innings?.nextIsFreeHit ? t('common.yes') : '—'}
           </p>
         </div>
         <div className="stat-box">
           <p className="text-[8.5px] uppercase tracking-wide text-slate-400">{t('common.extras')}</p>
-          <p className="font-hand text-xl font-bold leading-tight text-ink-deep">{innings?.extras ?? 0}</p>
+          <p className="font-hand text-xl font-bold leading-tight text-ink-deep tabular-nums">{innings?.extras ?? 0}</p>
         </div>
       </div>
       <p className="mt-3 flex items-center gap-1 text-[9px] leading-snug text-slate-400">

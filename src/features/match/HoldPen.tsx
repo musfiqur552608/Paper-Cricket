@@ -83,10 +83,10 @@ export function HoldPen({
         <button
           type="button"
           className={clsx(
-            'pointer-events-auto relative grid h-[88px] w-[88px] place-items-center rounded-full border-[2.5px] transition-colors',
+            'pointer-events-auto relative grid h-[88px] w-[88px] place-items-center rounded-full border-[2.5px] transition-all duration-150 hover:-translate-y-0.5',
             complete
-              ? 'border-leaf bg-[#eef6f0] text-leaf shadow-[0_0_0_5px_rgba(47,111,82,.08)]'
-              : 'border-ink bg-white/90 text-ink shadow-[0_8px_25px_-8px_rgba(23,55,99,.55)] hover:bg-white',
+              ? 'border-leaf bg-[#eef6f0] text-leaf shadow-[0_0_0_5px_rgba(47,111,82,.08)] dark:bg-[#12261c]'
+              : 'border-ink bg-white/90 text-ink shadow-[0_8px_25px_-8px_rgba(23,55,99,.55)] hover:bg-white dark:bg-white/10 dark:shadow-none dark:hover:bg-white/15',
             holding && 'scale-[1.03]',
           )}
           aria-label={t('match.tapToReady')}
@@ -127,13 +127,13 @@ export function HoldPen({
           )}
           {!complete || holding ? (
             <svg className="pointer-events-none absolute inset-[-7px] h-[102px] w-[102px] -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
-              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(35,78,139,.13)" strokeWidth="3" />
+              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(127,166,224,.2)" strokeWidth="3" />
               <circle
                 cx="40"
                 cy="40"
                 r="34"
                 fill="none"
-                stroke="#c8544a"
+                stroke="#e98a80"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeDasharray={circumference}
@@ -143,7 +143,7 @@ export function HoldPen({
             </svg>
           ) : null}
         </button>
-        <span className="mt-2 max-w-[170px] text-center text-[11px] font-semibold leading-tight text-ink/65 drop-shadow-[0_1px_0_rgba(255,255,255,.8)]">
+        <span className="mt-2 max-w-[170px] text-center text-[11px] font-semibold leading-tight text-ink/65 drop-shadow-[0_1px_0_rgba(255,255,255,.8)] dark:text-white/80 dark:drop-shadow-[0_1px_2px_rgba(0,0,0,.7)]">
           {complete ? t('match.penReady') : holding ? t('match.penHold') : t('match.tapToReady')}
         </span>
       </div>

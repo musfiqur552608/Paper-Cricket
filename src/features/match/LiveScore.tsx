@@ -26,17 +26,17 @@ export function LiveScore({ snapshot, view }: { snapshot: MatchSnapshot; view: M
     : null
 
   return (
-    <section className="paper-card overflow-hidden rounded-2xl">
+    <section className="paper-card paper-card-hover overflow-hidden rounded-2xl">
       <div className="flex items-center justify-between gap-2 border-b border-dashed border-ink/15 px-3.5 py-2">
         <div className="flex items-center gap-2">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-ink/10 text-[9px] font-bold text-ink">
+          <span className="grid h-5 w-5 place-items-center rounded-full bg-ink/10 text-[9px] font-bold text-ink tabular-nums dark:bg-white/10">
             {current?.number ?? 1}
           </span>
           <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
             {current ? inningsLabel(current.number, t) : t('common.innings')}
           </span>
           {chase ? (
-            <span className="hidden items-center gap-1 rounded-full bg-marigold/15 px-2 py-0.5 text-[9px] font-bold text-[#966313] sm:inline-flex">
+            <span className="hidden items-center gap-1 rounded-full bg-marigold/15 px-2 py-0.5 text-[9px] font-bold text-[#966313] sm:inline-flex dark:text-amber-300 tabular-nums">
               <Target size={9} /> {room.target}
             </span>
           ) : null}
@@ -73,23 +73,23 @@ export function LiveScore({ snapshot, view }: { snapshot: MatchSnapshot; view: M
             </div>
           </div>
           <div className="shrink-0 text-right">
-            <p className="font-hand text-[42px] font-bold leading-[0.8] tracking-tight text-ink-deep">
+            <p className="font-hand text-[42px] font-bold leading-[0.8] tracking-tight text-ink-deep tabular-nums">
               {current?.runs ?? 0}
-              <span className="text-[28px] text-ink/45">/{current?.wickets ?? 0}</span>
+              <span className="text-[28px] text-ink/45 dark:text-slate-400">/{current?.wickets ?? 0}</span>
             </p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 tabular-nums">
               {current ? formatOvers(current.legalBalls) : '0.0'} / {totalOvers} {t('common.oversShort')}
             </p>
           </div>
         </div>
 
         {chase && view.requiredRuns != null ? (
-          <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-[#eef4fe]/80 px-2.5 py-1.5">
-            <p className="text-[11px] font-bold text-ink">
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-[#eef4fe]/80 px-2.5 py-1.5 dark:bg-white/10">
+            <p className="text-[11px] font-bold text-ink tabular-nums">
               {t('match.needRuns', { runs: view.requiredRuns, balls: view.ballsRemaining })}
             </p>
             {view.rrr != null ? (
-              <p className="text-[10px] font-medium text-slate-500">
+              <p className="text-[10px] font-medium text-slate-500 tabular-nums">
                 {t('match.requiredRate', { rate: view.rrr.toFixed(2) })}
               </p>
             ) : null}
@@ -159,12 +159,12 @@ export function BallChip({ ball, small = false }: { ball: BallDTO; small?: boole
   return (
     <span
       className={clsx(
-        'inline-grid shrink-0 place-items-center rounded-full border text-[10px] font-bold',
-        small ? 'h-6 w-6' : 'h-7 w-7',
-        isWicket && 'border-pencil/30 bg-pencil text-white',
-        isBoundary && 'border-ink/20 bg-ink text-white',
-        isExtra && 'border-[#d8c7a2] bg-[#f5eddc] text-slate-500',
-        !isWicket && !isBoundary && !isExtra && 'border-ink/15 bg-white/80 text-ink-deep',
+        'inline-grid shrink-0 place-items-center rounded-full border text-[10px] font-bold tabular-nums',
+        small ? 'h-6 w-6 min-w-6' : 'h-7 w-7 min-w-7',
+        isWicket && 'border-pencil/30 bg-pencil text-white shadow-[0_2px_8px_-2px_rgba(200,84,74,.6)]',
+        isBoundary && 'border-ink/20 bg-ink text-white shadow-[0_2px_8px_-2px_rgba(35,78,139,.5)]',
+        isExtra && 'border-[#d8c7a2] bg-[#f5eddc] text-slate-500 dark:border-slate-600/40 dark:bg-[#7c6a3e]/60 dark:text-slate-300',
+        !isWicket && !isBoundary && !isExtra && 'border-ink/15 bg-white/80 text-ink-deep dark:border-slate-600/40 dark:bg-white/10 dark:text-slate-200',
       )}
       title={`${title}${ball.isFreeHit ? ` · ${t('common.freeHit')}` : ''}`}
     >
@@ -195,7 +195,7 @@ export function InningsPanel({ snapshot, view, userId }: { snapshot: MatchSnapsh
   const lastOver = timeline[timeline.length - 1]
 
   return (
-    <div className="paper-card rounded-2xl p-3.5">
+    <div className="paper-card paper-card-hover rounded-2xl p-3.5">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="flex items-center gap-1.5 font-hand text-[23px] font-bold leading-none text-ink-deep">
           <span className="text-pencil">✎</span> {t('match.scorecard')}
@@ -203,8 +203,8 @@ export function InningsPanel({ snapshot, view, userId }: { snapshot: MatchSnapsh
         <span className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-slate-400">{battingPlayer?.teamName}</span>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-[#e1d3b8] bg-white/40">
-        <table className="w-full border-collapse text-[11px]">
+      <div className="overflow-hidden rounded-lg border border-[#e1d3b8] bg-white/40 dark:border-slate-600/35 dark:bg-white/10">
+        <table className="w-full border-collapse text-[11px] tabular-nums">
           <thead>
             <tr className="border-b border-[#e1d3b8] text-[9px] uppercase tracking-wide text-slate-400">
               <th className="px-2 py-1 text-left font-semibold">{t('score.batting')}</th>

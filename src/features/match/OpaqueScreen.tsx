@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import { EyeOff, Hourglass, Lock, PenLine, Timer } from 'lucide-react'
 import clsx from 'clsx'
-import { usePreferences } from '../../store/preferences'
+import { usePreferences, useThemePrefs } from '../../store/preferences'
+import { getPaperTheme } from '../../config/themes'
 import { SPIN } from '../../config/gameConfig'
 import { sound, haptic } from '../../lib/sound'
 import { Pen3D, PenGraphic } from '../../components/board/Pen3D'
@@ -53,6 +54,15 @@ export function OpaqueScreen({
   const padRef = useRef<HTMLDivElement>(null)
   const reducedPref = usePreferences((state) => state.reducedMotion)
   const reduced = reducedMotion || reducedPref
+  const colorMode = usePreferences((state) => state.colorMode)
+  const systemDark = usePreferences(
+    (state: { colorMode: string }) =>
+      (state.colorMode === 'auto' &&
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches) ||
+      state.colorMode === 'dark',
+  )
+  const paperThemeId = useThemePrefs((state) => state.paperThemeId)
   const aimSeconds = Math.ceil(remainingMs / 1000)
 
   useEffect(() => {
@@ -125,6 +135,9 @@ export function OpaqueScreen({
   const endX = 200 + Math.sin(radians) * aimRadius
   const endY = 200 - Math.cos(radians) * aimRadius
   const penSlide = reduced ? 0 : SPIN.penSlideMs / 1000
+  const dark = colorMode === 'auto' ? systemDark : colorMode === 'dark'
+  const cover = dark ? getPaperTheme(paperThemeId ?? 'midnight') : null
+  const ribbon = dark ? cover!.label : '#c8544a'
 
   return (
     <AnimatePresence>
@@ -137,10 +150,23 @@ export function OpaqueScreen({
           exit={reduced ? { opacity: 0 } : { y: '-110%', rotate: -1.6 }}
           transition={{ duration: reduced ? 0.1 : 0.85, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="screen-paper absolute inset-0 border border-[#cbbb98] shadow-[inset_0_0_40px_rgba(130,108,70,.08)]">
+          <div
+            className="screen-paper absolute inset-0 border border-[#cbbb98] shadow-[inset_0_0_40px_rgba(130,108,70,.08)]"
+            style={
+              cover
+                ? { backgroundColor: cover.sheetBg, color: cover.label, borderColor: cover.sheetBorder }
+                : undefined
+            }
+          >
             {/* faint ruled paper + folded corner */}
             <div className="absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-black/10 to-transparent" />
-            <div className="absolute -right-10 -top-10 h-28 w-28 rotate-45 border border-[#d8c7a2] bg-[#f8f1df] shadow-md" />
+            <div
+              className="absolute -right-10 -top-10 h-28 w-28 rotate-45 border shadow-md"
+              style={{
+                borderColor: cover ? cover.sheetBorder : '#d8c7a2',
+                backgroundColor: cover ? cover.sheetBg : '#f8f1df',
+              }}
+            />
             <span className="absolute left-4 top-4 rotate-[-2deg] font-hand text-[12px] tracking-wider text-ink/35">
               {t('match.screenOn')}
             </span>
@@ -163,7 +189,7 @@ export function OpaqueScreen({
                   {spinningText ?? t('match.spinning')}
                 </p>
                 <p className="mt-2 max-w-[220px] text-[11.5px] leading-relaxed text-slate-500">{t('match.handsOff')}</p>
-                <div className="mt-4 flex items-center gap-1.5 rounded-full border border-ink/15 bg-white/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-ink/50">
+                <div className="mt-4 flex items-center gap-1.5 rounded-full border border-ink/15 bg-white/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-ink/50 dark:border-slate-600/40 dark:bg-white/10 dark:text-slate-300">
                   <Lock size={11} /> {t('match.screenNote')}
                 </div>
               </div>
@@ -183,14 +209,14 @@ export function OpaqueScreen({
               >
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center">
                   <div className="mt-5 flex w-full items-start justify-between px-5">
-                    <div className="rounded-md border border-ink/20 bg-white/55 px-2 py-1 text-left">
+                    <div className="rounded-md border border-ink/20 bg-white/55 px-2 py-1 text-left dark:border-slate-600/40 dark:bg-white/10">
                       <p className="flex items-center gap-1 text-[8.5px] font-bold uppercase tracking-[0.18em] text-slate-500">
                         <EyeOff size={10} /> {t('match.aimTitle')}
                       </p>
                       <p className="font-hand text-lg leading-none text-ink-deep">{t('match.aimSub')}</p>
                     </div>
                     {showAim ? (
-                      <div className="flex items-center gap-1.5 rounded-full border border-pencil/25 bg-[#fff8f5]/80 px-2.5 py-1.5 text-pencil">
+                      <div className="flex items-center gap-1.5 rounded-full border border-pencil/25 bg-[#fff8f5]/80 px-2.5 py-1.5 text-pencil dark:bg-white/10">
                         <Timer size={13} />
                         <span className="font-mono text-sm font-bold">
                           {aimSeconds}
@@ -198,7 +224,7 @@ export function OpaqueScreen({
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5 rounded-full border border-ink/15 bg-white/55 px-2.5 py-1.5 text-[10px] font-semibold text-ink/60">
+                      <div className="flex items-center gap-1.5 rounded-full border border-ink/15 bg-white/55 px-2.5 py-1.5 text-[10px] font-semibold text-ink/60 dark:border-slate-600/40 dark:bg-white/10 dark:text-slate-300">
                         <Hourglass size={12} /> {t('match.waitingAim')}
                       </div>
                     )}
@@ -209,8 +235,8 @@ export function OpaqueScreen({
                     <div className="absolute inset-[12%] rounded-full border border-dashed border-ink/15" />
                     <div className="absolute inset-[28%] rounded-full border border-ink/10" />
                     <svg viewBox="0 0 400 400" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
-                      <line x1="200" y1="200" x2="200" y2="200" stroke="#c8544a" strokeWidth="2" opacity={showAim ? 0.25 : 0} />
-                      <circle cx="200" cy="200" r="7" fill="#fff8f1" stroke="#c8544a" strokeWidth="2.5" />
+                      <line x1="200" y1="200" x2="200" y2="200" stroke={ribbon} strokeWidth="2" opacity={showAim ? 0.25 : 0} />
+                      <circle cx="200" cy="200" r="7" fill={cover ? cover.sheetBg : '#fff8f1'} stroke={ribbon} strokeWidth="2.5" />
                       {showAim ? (
                         <>
                           <motion.line
@@ -219,7 +245,7 @@ export function OpaqueScreen({
                             initial={false}
                             animate={{ x2: endX, y2: endY }}
                             transition={{ duration: sliding ? penSlide : 0, ease: [0.16, 1, 0.3, 1] }}
-                            stroke="#c8544a"
+                            stroke={ribbon}
                             strokeWidth="3"
                             strokeLinecap="round"
                             strokeDasharray={dragging ? '7 8' : '10 10'}

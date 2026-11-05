@@ -362,9 +362,9 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
         </div>
 
         {emptySlot ? (
-          <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-dashed border-ink/25 bg-[#edf3fd]/80 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-dashed border-ink/25 bg-[#edf3fd]/80 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-600/40 dark:bg-white/10">
             <div className="flex items-center gap-3">
-              <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-ink shadow-sm">
+              <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-ink shadow-sm dark:bg-white/10">
                 <UserPlus size={19} />
                 <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full bg-marigold" />
               </span>
@@ -374,7 +374,7 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex h-10 items-center rounded-lg border border-[#d8c7a2] bg-white/75 px-3 font-mono text-lg font-bold tracking-[0.22em] text-ink">
+              <div className="flex h-10 items-center rounded-lg border border-[#d8c7a2] bg-white/75 px-3 font-mono text-lg font-bold tracking-[0.22em] text-ink dark:border-slate-600/40 dark:bg-white/10">
                 {room.code}
               </div>
               <button type="button" className="btn-primary btn-sm" onClick={() => setInviteOpen(true)}>
@@ -398,7 +398,7 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
                       key={slot}
                       type="button"
                       onClick={() => setInviteOpen(true)}
-                      className="flex min-h-[178px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#d3c2a0] bg-paper-50/35 p-5 text-slate-400 transition hover:border-ink/35 hover:bg-paper-50/70 hover:text-ink"
+                      className="flex min-h-[178px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#d3c2a0] bg-paper-50/35 p-5 text-slate-400 transition hover:border-ink/35 hover:bg-paper-50/70 hover:text-ink dark:border-slate-600/40 dark:bg-white/10 dark:hover:bg-white/15"
                     >
                       <span className="grid h-12 w-12 place-items-center rounded-full border border-dashed border-current/40">
                         <UserPlus size={21} />
@@ -520,7 +520,7 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e0d2b8] bg-white/40 px-3.5 py-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e0d2b8] bg-white/40 px-3.5 py-2.5 dark:border-slate-600/35 dark:bg-white/10">
               <div className="flex items-center gap-2 text-[11.5px] font-medium text-slate-500">
                 <AlertCircle size={14} className="text-ink/45" />
                 {activePlayers.length < 2
@@ -554,7 +554,7 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
                 <button
                   type="button"
                   onClick={() => void copyCode()}
-                  className="flex min-h-[46px] flex-1 items-center justify-center gap-3 rounded-xl border border-dashed border-ink/25 bg-white/55 font-mono text-xl font-bold tracking-[0.24em] text-ink transition hover:bg-white"
+                  className="flex min-h-[46px] flex-1 items-center justify-center gap-3 rounded-xl border border-dashed border-ink/25 bg-white/55 font-mono text-xl font-bold tracking-[0.24em] text-ink transition hover:bg-white dark:border-slate-600/40 dark:bg-white/10 dark:hover:bg-white/15"
                 >
                   {room.code}
                   {copiedCode ? <Check size={15} className="text-leaf" /> : <Copy size={14} className="text-slate-400" />}
@@ -567,7 +567,7 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
           </div>
 
           {/* Settings */}
-          <aside className="paper-card relative h-fit overflow-hidden rounded-2xl p-4 sm:p-5">
+          <aside className="paper-card paper-card-hover relative h-fit overflow-hidden rounded-2xl p-4 sm:p-5">
             <div className="pointer-events-none absolute -right-5 -top-6 rotate-12 font-hand text-[86px] text-ink/[0.045]">
               {t('lobby.rulesScribble')}
             </div>
@@ -603,11 +603,11 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
               <p className="-mt-1 px-1 text-[10.5px] leading-snug text-slate-400">
                 {t('lobby.wicketsSetSquad', { count: rules.wickets })}
               </p>
-              <div className="rounded-xl border border-[#d8c8ab] bg-white/40 px-3 py-2.5">
+              <div className="rounded-xl border border-[#d8c8ab] bg-white/40 px-3 py-2.5 dark:border-slate-600/35 dark:bg-white/10">
                 <p className="text-[12px] font-semibold text-slate-700">{t('lobby.batFirst')}</p>
                 <p className="mt-1 text-[10.5px] leading-snug text-slate-400">{t('lobby.coinTossNote')}</p>
               </div>
-              <div className="flex items-center justify-between gap-2 rounded-xl border border-[#d8c8ab] bg-white/40 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-[#d8c8ab] bg-white/40 px-3 py-2.5 dark:border-slate-600/35 dark:bg-white/10">
                 <div>
                   <p className="text-[12px] font-semibold text-slate-700">{t('lobby.superOverLabel')}</p>
                   <p className="text-[10px] text-slate-400">{rules.superOver ? t('lobby.superOverOn') : t('lobby.superOverOff')}</p>
@@ -634,7 +634,7 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
               </div>
             </div>
 
-            <div className="mt-4 rounded-xl bg-ink/[0.045] px-3 py-2.5 text-center">
+            <div className="mt-4 rounded-xl bg-ink/[0.045] px-3 py-2.5 text-center dark:bg-white/10">
               <p className="font-hand text-[23px] font-bold leading-none text-ink-deep">
                 {t('lobby.settingsSummary', {
                   overs: rules.overs,
@@ -647,7 +647,7 @@ export function LobbyPage({ snapshot, userId, opponentOnline, presenceReady, ref
             <button
               type="button"
               onClick={() => setInviteOpen(true)}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#d3c2a0] px-3 py-2.5 text-[11.5px] font-semibold text-slate-500 transition hover:border-ink/30 hover:text-ink"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#d3c2a0] px-3 py-2.5 text-[11.5px] font-semibold text-slate-500 transition hover:border-ink/30 hover:text-ink dark:border-slate-600/40 dark:hover:border-slate-500/60"
             >
               <Sparkles size={13} className="text-marigold" />
               {t('lobby.shareCall')}

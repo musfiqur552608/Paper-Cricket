@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Logo } from './Logo'
-import { LanguageToggle, SoundToggle } from './Toggles'
+import { LanguageToggle, SoundToggle, ColorModeToggle } from './Toggles'
 import clsx from 'clsx'
 
 export function AppHeader({
@@ -17,7 +17,7 @@ export function AppHeader({
 }) {
   const { t } = useTranslation()
   return (
-    <header className={clsx('relative z-30 w-full', className)}>
+    <header className={clsx('relative z-30 w-full border-b border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-md shadow-[0_1px_12px_-6px_rgba(23,55,99,.18)] dark:shadow-none', className)}>
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Logo compact={compact} link={brandLink} />
         <div className="flex items-center gap-2">
@@ -30,6 +30,7 @@ export function AppHeader({
               {t('common.howToPlay')}
             </button>
           ) : null}
+          <ColorModeToggle />
           <LanguageToggle />
           <SoundToggle />
         </div>
