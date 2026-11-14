@@ -12,10 +12,13 @@ export function CoinToss({
   open,
   winner,
   phase,
+  resultText,
 }: {
   open: boolean
   winner: TossWinner | null
   phase: 'flipping' | 'result'
+  /** Optional wording for local modes that do not use host/guest labels. */
+  resultText?: string
 }) {
   const { t } = useTranslation()
 
@@ -59,9 +62,7 @@ export function CoinToss({
 
             <p className="mt-5 font-hand text-3xl font-bold leading-none text-ink-deep">
               {phase === 'result'
-                ? winner.side === 'host'
-                  ? t('toss.hostWins')
-                  : t('toss.guestWins')
+                ? resultText ?? (winner.side === 'host' ? t('toss.hostWins') : t('toss.guestWins'))
                 : t('toss.flipping')}
             </p>
 

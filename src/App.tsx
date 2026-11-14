@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, Outlet, RouterProvider, useLocation } fr
 import i18n from './i18n'
 import { LandingPage } from './features/landing/LandingPage'
 import { RoomPage } from './features/room/RoomPage'
+import { SoloPage } from './features/solo/SoloPage'
 import { ToastViewport } from './components/ui/ToastViewport'
 
 interface BoundaryState {
@@ -58,6 +59,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <LandingPage /> },
       { path: '/room/:code', element: <RoomPage /> },
+      { path: '/solo', element: <SoloPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

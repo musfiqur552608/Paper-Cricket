@@ -14,7 +14,9 @@ import {
   Loader2,
   LogOut,
   MessageCircle,
+  RotateCw,
   Send,
+  Settings2,
   Share2,
   Sparkles,
   Trophy,
@@ -43,6 +45,10 @@ interface ResultProps {
   snapshot: MatchSnapshot
   userId: string
   onLeave: () => Promise<void>
+  /** Practice mode: local-only wording, no room code, optional rematch. */
+  solo?: boolean
+  onRematch?: () => void
+  onChangeSetup?: () => void
 }
 
 const OUTCOME_LABEL_KEYS: Record<string, string> = {
@@ -57,7 +63,14 @@ function outLabel(outcome: string | null, t: (key: string) => string): string {
   return t(OUTCOME_LABEL_KEYS[outcome] ?? 'score.out')
 }
 
-export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
+export function ResultPage({
+  snapshot,
+  userId,
+  onLeave,
+  solo = false,
+  onRematch,
+  onChangeSetup,
+}: ResultProps) {
   const { t, i18n } = useTranslation()
   const isBn = i18n.language.startsWith('bn')
   const reduced = usePreferences((state) => state.reducedMotion)
@@ -266,7 +279,7 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-2 px-3 sm:px-5">
           <Logo compact link={false} />
           <span className="hidden rounded-md border border-[#d8c7a2] bg-white/65 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-[0.16em] text-ink sm:inline-block dark:border-slate-600/40 dark:bg-white/10">
-            {room.code}
+            {solo ? t('solo.practiceBadge') : room.code}
           </span>
           <span className="hidden items-center gap-1 rounded-full border border-leaf/20 bg-leaf/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-leaf sm:inline-flex">
             <Check size={10} /> {abandoned ? t('match.abandonedWinner') : t('common.finished')}
@@ -279,7 +292,7 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
               type="button"
               onClick={() => setLeaveOpen(true)}
               className="grid h-9 w-9 place-items-center rounded-full border border-[#d3c2a0] bg-paper-50/80 text-slate-500 transition hover:bg-white hover:text-pencil"
-              aria-label={t('common.leaveRoom')}
+              aria-label={solo ? t('solo.backHome') : t('common.leaveRoom')}
             >
               <LogOut size={16} />
             </button>
@@ -294,7 +307,7 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
             onClick={() => setLeaveOpen(true)}
             className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-500 transition hover:text-ink"
           >
-            <ArrowLeft size={14} /> {t('common.leaveRoom')}
+            <ArrowLeft size={14} /> {solo ? t('solo.backHome') : t('common.leaveRoom')}
           </button>
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">
             {t('result.matchDetails', { overs: room.overs, wickets: room.wickets, date: dateLabel })}
@@ -340,7 +353,7 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
                   <p className="font-hand text-[28px] font-bold leading-none text-ink-deep">{winner.teamName}</p>
                   <p className="mt-0.5 text-[11px] text-slate-500">
                     {winner.name}
-                    {winner.userId === room.hostUserId ? ` · ${t('common.host')}` : ''}
+                    {winner.userId === room.hostUserId ? ` · ${solo ? t('common.you') : t('common.host')}` : ''}
                   </p>
                 </div>
               </div>
@@ -389,9 +402,7 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
 
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-300/70 bg-amber-50/80 px-3 py-2.5 text-[11.5px] leading-relaxed text-amber-900">
           <Download size={15} className="mt-0.5 shrink-0" />
-          <span>
-            {t('result.waitOpponent')} {t('result.roomLife')}
-          </span>
+          <span>{solo ? t('solo.resultNote') : `${t('result.waitOpponent')} ${t('result.roomLife')}`}</span>
         </div>
 
         {/* export card starts here */}
@@ -477,16 +488,30 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
 
             <footer className="flex items-center justify-between border-t-2 border-dashed border-ink/20 pt-3">
               <p className="font-hand text-lg text-ink/55">{t('result.scorebook')}</p>
-              <p className="font-mono text-[10px] tracking-[0.18em] text-slate-400">{room.code}</p>
+              <p className="font-mono text-[10px] tracking-[0.18em] text-slate-400">
+                {solo ? t('solo.cpuShort') : room.code}
+              </p>
             </footer>
           </div>
         </article>
 
-        <div className="mt-4 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+        <div className="mt-4 flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          {onRematch ? (
+            <button type="button" className="btn-primary" onClick={onRematch}>
+              <RotateCw size={16} /> {t('solo.playAgain')}
+            </button>
+          ) : null}
+          {onChangeSetup ? (
+            <button type="button" className="btn-paper" onClick={onChangeSetup}>
+              <Settings2 size={16} className="text-ink/75" /> {t('solo.changeSetup')}
+            </button>
+          ) : null}
           <button type="button" className="btn-paper" onClick={() => setLeaveOpen(true)}>
-            <LogOut size={16} className="text-pencil" /> {t('result.leave')}
+            <LogOut size={16} className="text-pencil" /> {solo ? t('solo.backHome') : t('result.leave')}
           </button>
-          <p className="text-center text-[10.5px] text-slate-400 sm:ml-auto sm:text-right">{t('result.roomLife')}</p>
+          <p className="text-center text-[10.5px] text-slate-400 sm:ml-auto sm:text-right">
+            {solo ? t('solo.localNote') : t('result.roomLife')}
+          </p>
         </div>
       </main>
 
@@ -494,11 +519,11 @@ export function ResultPage({ snapshot, userId, onLeave }: ResultProps) {
         open={leaveOpen}
         onClose={() => setLeaveOpen(false)}
         onLeave={onLeave}
-        title={t('result.leavingTitle')}
-        body={t('result.leavingBody')}
+        title={solo ? t('solo.leaveTitle') : t('result.leavingTitle')}
+        body={solo ? t('solo.leaveBody') : t('result.leavingBody')}
         downloadLabel={t('result.downloadPng')}
         onDownload={downloadImage}
-        leavingLabel={t('result.leave')}
+        leavingLabel={solo ? t('solo.backHome') : t('result.leave')}
       />
 
       <Dialog open={shareOpen} onClose={() => setShareOpen(false)} title={t('result.shareTitle')} eyebrow={t('result.shareEyebrow')} size="sm">

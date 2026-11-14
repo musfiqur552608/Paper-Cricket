@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -36,6 +36,7 @@ import { InningsPanel, LiveScore } from './LiveScore'
 import { InningsBreak } from './InningsBreak'
 import { advanceBall, claimForfeit, setBatterReady, startSpin, stopSpin, submitAim } from '../../lib/supabase/api'
 import { getMatchView } from '../../lib/matchView'
+import type { MatchActions } from '../../lib/matchActions'
 import { useServerClock } from '../../hooks/useMatchTiming'
 import { commentaryForBall } from '../../lib/commentary'
 import { errorKey, toAppError } from '../../lib/errors'
@@ -53,13 +54,25 @@ interface MatchProps {
   presenceReady: boolean
   refresh: () => Promise<void>
   onLeave: () => Promise<void>
+  /** The online defaults are used when no adapter is supplied. */
+  actions?: MatchActions
+  mode?: 'online' | 'solo'
 }
 
 function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms))
 }
 
-export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, refresh, onLeave }: MatchProps) {
+export function MatchPage({
+  snapshot,
+  userId,
+  opponentOnline,
+  presenceReady,
+  refresh,
+  onLeave,
+  actions,
+  mode = 'online',
+}: MatchProps) {
   const { t } = useTranslation()
   const reducedPref = usePreferences((state) => state.reducedMotion)
   const colorMode = usePreferences((state) => state.colorMode)
@@ -76,6 +89,18 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
   const now = useServerClock(snapshot.serverNow)
   const view = getMatchView(snapshot, userId, now)
   const { room } = snapshot
+  const matchActions = useMemo<MatchActions>(
+    () =>
+      actions ?? {
+        setBatterReady: () => setBatterReady(room.id),
+        startSpin: () => startSpin(room.id),
+        stopSpin: (rotation) => stopSpin(room.id, rotation),
+        submitAim: (aim, force) => submitAim(room.id, aim, force),
+        advanceBall: (lastBallId) => advanceBall(room.id, lastBallId),
+        claimForfeit: () => claimForfeit(room.id),
+      },
+    [actions, room.id],
+  )
   const [styleOpen, setStyleOpen] = useState(false)
   const [localSpin, setLocalSpin] = useState<{
     id: string
@@ -282,7 +307,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
       let lastError: unknown = null
       for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
-          await submitAim(room.id, safeAngle)
+          await matchActions.submitAim(safeAngle)
           await refresh()
           return
         } catch (caught) {
@@ -305,7 +330,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
       setSliding(false)
       if (lastError) notify.error(t(errorKey(toAppError(lastError).code)))
     },
-    [effectiveSpin, isBatter, refresh, room.id, t],
+    [effectiveSpin, isBatter, matchActions, refresh, t],
   )
 
   // Releasing the board is the stop action. Start the sealed spin and stop it
@@ -318,13 +343,13 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     setCommitBusy(true)
     const rotation = manualRotationRef.current
     try {
-      const spin = await startSpin(room.id)
+      const spin = await matchActions.startSpin()
       setLocalSpin(spin)
       let stopped: StopSpinResult | null = null
       let lastError: unknown = null
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
-          stopped = await stopSpin(room.id, rotation)
+          stopped = await matchActions.stopSpin(rotation)
           break
         } catch (caught) {
           lastError = caught
@@ -349,7 +374,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
       commitRef.current = false
       setCommitBusy(false)
     }
-  }, [batterReady, isBowler, phase, refresh, room.id, t])
+  }, [batterReady, isBowler, matchActions, phase, refresh, t])
 
   // Realtime room updates are the fast path, but the batter must not wait for
   // the slower fallback while the bowler releases the board. Poll quickly from
@@ -378,7 +403,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     }
     if (isBowler && now >= deadline + 1500 && rescuedRef.current !== effectiveSpin.id) {
       rescuedRef.current = effectiveSpin.id
-      void submitAim(room.id, 0, true)
+      void matchActions.submitAim(0, true)
         .then(() => refresh())
         .catch(async (caught) => {
           const appError = toAppError(caught)
@@ -389,7 +414,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
           await refresh()
         })
     }
-  }, [aimAngle, effectiveSpin, handleSlide, isBatter, isBowler, now, refresh, room.id, screenPhase, t])
+  }, [aimAngle, effectiveSpin, handleSlide, isBatter, isBowler, matchActions, now, refresh, screenPhase, t])
 
   const doAdvance = useCallback(async () => {
     if (!revealedBall || advancing) return
@@ -397,7 +422,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     advanceRef.current = revealedBall.id
     setAdvancing(true)
     try {
-      await advanceBall(room.id, revealedBall.id)
+      await matchActions.advanceBall(revealedBall.id)
       await refresh()
     } catch (caught) {
       advanceRef.current = null
@@ -412,7 +437,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     } finally {
       setAdvancing(false)
     }
-  }, [advancing, refresh, revealedBall, room.id, t])
+  }, [advancing, matchActions, refresh, revealedBall, t])
 
   useEffect(() => {
     if (!revealedBall) return
@@ -441,7 +466,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     sound.penDown()
     haptic(12)
     try {
-      await setBatterReady(room.id)
+      await matchActions.setBatterReady()
       setLocalReady(true)
       await refresh()
     } catch (caught) {
@@ -456,7 +481,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
     if (claiming) return
     setClaiming(true)
     try {
-      await claimForfeit(room.id)
+      await matchActions.claimForfeit()
       await refresh()
     } catch (caught) {
       notify.error(t(errorKey(toAppError(caught).code)))
@@ -492,13 +517,16 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
           </div>
           <div className="hidden h-6 w-px bg-ink/10 min-[520px]:block" />
           <div className="hidden items-center gap-1.5 min-[520px]:flex">
-            <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">{t('common.room')}</span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">
+              {mode === 'solo' ? t('solo.practiceBadge') : t('common.room')}
+            </span>
             <span className="rounded-md border border-[#d8c7a2] bg-white/65 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-[0.16em] text-ink dark:border-slate-600/40 dark:bg-white/10">
-              {room.code}
+              {mode === 'solo' ? t('solo.vsCpu') : room.code}
             </span>
           </div>
           <span className="inline-flex items-center gap-1 rounded-full border border-leaf/20 bg-leaf/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-leaf">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-leaf" /> {t('common.live')}
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-leaf" />{' '}
+            {mode === 'solo' ? t('solo.localBadge') : t('common.live')}
           </span>
           <div className="ml-auto flex items-center gap-1.5">
             <button
@@ -697,6 +725,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
                     readyBusy={readyBusy}
                     committing={commitBusy}
                     striker={view.strikerName}
+                    solo={mode === 'solo'}
                   />
                 ) : null}
 
@@ -814,6 +843,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
               view={view}
               onlineText={onlineText}
               opponentOnline={opponentLooksOnline}
+              solo={mode === 'solo'}
             />
           </aside>
         </div>
@@ -823,7 +853,7 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
         open={styleOpen}
         onClose={() => setStyleOpen(false)}
         onSaved={() => void refresh()}
-        roomId={room.id}
+        roomId={mode === 'solo' ? undefined : room.id}
         currentTheme={view.me?.paperThemeId ?? null}
         currentPen={view.me?.penStyleId ?? null}
       />
@@ -832,9 +862,9 @@ export function MatchPage({ snapshot, userId, opponentOnline, presenceReady, ref
         open={leaveOpen}
         onClose={() => setLeaveOpen(false)}
         onLeave={onLeave}
-        title={t('match.leaveTitle')}
-        body={t('match.leaveBody')}
-        leavingLabel={t('match.leaveConfirm')}
+        title={mode === 'solo' ? t('solo.leaveTitle') : t('match.leaveTitle')}
+        body={mode === 'solo' ? t('solo.leaveBody') : t('match.leaveBody')}
+        leavingLabel={mode === 'solo' ? t('solo.leaveConfirm') : t('match.leaveConfirm')}
       />
 
       <InningsBreak
@@ -892,12 +922,14 @@ function ReadyControls({
   readyBusy,
   committing,
   striker,
+  solo,
 }: {
   isBatter: boolean
   batterReady: boolean
   readyBusy: boolean
   committing: boolean
   striker: string | null
+  solo: boolean
 }) {
   const { t } = useTranslation()
   if (isBatter) {
@@ -916,7 +948,11 @@ function ReadyControls({
             {batterReady ? t('match.penReady') : t('match.penDownTitle')}
           </p>
           <p className="mt-1 text-[11.5px] leading-relaxed text-slate-500">
-            {batterReady ? t('match.waitingOpponent') : t('match.penDownBody')}
+            {batterReady
+              ? t('match.waitingOpponent')
+              : solo
+                ? t('solo.batterReadyBody')
+                : t('match.penDownBody')}
           </p>
           {!batterReady ? (
             <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-ink/[0.055] px-2 py-0.5 text-[10px] text-slate-500">
@@ -943,7 +979,13 @@ function ReadyControls({
           {committing ? t('match.spinStopping') : batterReady ? t('match.spinTitle') : t('match.waitingForBatter')}
         </p>
         <p className="mt-1 max-w-[380px] text-[11.5px] leading-relaxed text-slate-500">
-          {committing ? t('match.spinBoardHint') : batterReady ? t('match.spinBody') : t('match.penDownBody')}
+          {committing
+            ? t('match.spinBoardHint')
+            : batterReady
+              ? t('match.spinBody')
+              : solo
+                ? t('solo.bowlerWaitingBody')
+                : t('match.waitingBatterBody')}
         </p>
         {batterReady && striker && !committing ? (
           <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-ink/[0.055] px-2 py-0.5 text-[10px] text-slate-500">
@@ -1019,11 +1061,13 @@ function MatchSideInfo({
   view,
   onlineText,
   opponentOnline,
+  solo,
 }: {
   snapshot: MatchSnapshot
   view: ReturnType<typeof getMatchView>
   onlineText: string
   opponentOnline: boolean
+  solo: boolean
 }) {
   const { t } = useTranslation()
   const innings = view.innings
@@ -1034,7 +1078,9 @@ function MatchSideInfo({
         <div className="min-w-0">
           <p className="truncate text-[11.5px] font-semibold text-slate-700 dark:text-slate-200">{onlineText}</p>
           <p className="text-[9px] text-slate-400">
-            {opponentOnline ? t('lobby.online') : t('lobby.offline')} · {view.opponent?.teamName}
+            {solo
+              ? `${t('solo.cpuOpponent')} · ${view.opponent?.teamName}`
+              : `${opponentOnline ? t('lobby.online') : t('lobby.offline')} · ${view.opponent?.teamName}`}
           </p>
         </div>
         <span className={clsx('ml-auto h-2 w-2 rounded-full', opponentOnline ? 'bg-leaf' : 'bg-slate-300 dark:bg-slate-600')} />
@@ -1064,7 +1110,7 @@ function MatchSideInfo({
       </div>
       <p className="mt-3 flex items-center gap-1 text-[9px] leading-snug text-slate-400">
         <Flame size={10} className="text-marigold" />
-        {t('match.freezeNote')}
+        {solo ? t('solo.localNote') : t('match.freezeNote')}
       </p>
     </div>
   )

@@ -14,7 +14,8 @@ interface ThemePenPickerProps {
   open: boolean
   onClose: () => void
   onSaved: () => void
-  roomId: string
+  /** Omit for the local practice match so the picker never calls Supabase. */
+  roomId?: string
   currentTheme: PaperThemeId | null
   currentPen: PenStyleId | null
   disabled?: boolean
@@ -74,7 +75,9 @@ export function ThemePenPicker({
     // even before the Supabase migration is applied.
     setThemePrefs({ paperThemeId: theme, penStyleId: pen })
     try {
-      await updatePlayerTheme(roomId, { paperThemeId: theme ?? 'notebook', penStyleId: pen ?? 'clear' })
+      if (roomId) {
+        await updatePlayerTheme(roomId, { paperThemeId: theme ?? 'notebook', penStyleId: pen ?? 'clear' })
+      }
     } catch {
       // A missing migration or offline blip must not block the local look.
     }

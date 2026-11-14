@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowDown,
   ArrowRight,
   BookOpen,
   CircleDot,
+  Cpu,
   EyeOff,
   LogIn,
   PenLine,
@@ -23,6 +25,7 @@ import { IS_SUPABASE_CONFIGURED } from '../../config/gameConfig'
 
 export function LandingPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const reducedMotion = usePreferences((state) => state.reducedMotion)
   const [howOpen, setHowOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
@@ -105,6 +108,31 @@ export function LandingPage() {
                 {t('landing.joinCta')}
               </button>
             </div>
+
+            <div className="mt-3 flex justify-center md:justify-start">
+              <button
+                type="button"
+                onClick={() => navigate('/solo')}
+                className="group flex w-full max-w-[400px] items-center gap-2.5 rounded-xl border border-dashed border-ink/25 bg-paper-50/55 px-3.5 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-ink/45 hover:bg-paper-50/90 dark:border-slate-500/50 dark:bg-white/[0.07] dark:hover:border-slate-400/70 dark:hover:bg-white/[0.12] sm:w-auto"
+              >
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-pencil/10 text-pencil">
+                  <Cpu size={16} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12.5px] font-bold text-ink-deep dark:text-white">
+                    {t('landing.vsComputerCta')}
+                  </span>
+                  <span className="block text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                    {t('landing.vsComputerNote')}
+                  </span>
+                </span>
+                <ArrowRight
+                  size={15}
+                  className="shrink-0 text-ink/35 transition group-hover:translate-x-0.5 group-hover:text-ink/70 dark:text-white/40 dark:group-hover:text-white/80"
+                />
+              </button>
+            </div>
+
             <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-medium text-slate-400 md:justify-start">
               <span className="inline-flex items-center gap-1"><Users size={12} /> 2 {t('common.player').toLowerCase()}</span>
               <span className="text-slate-300">·</span>

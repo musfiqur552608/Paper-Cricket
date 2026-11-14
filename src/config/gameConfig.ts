@@ -96,6 +96,12 @@ export const DEFAULT_SQUADS = {
   bn: ['রাফি', 'সিয়াম', 'আরিফ', 'নীল', 'শুভ', 'তানভীর', 'রোহান', 'সাকিব', 'ফাহিম', 'ইমরান', 'নাঈম'],
 } as const
 
+/** A friendly robot eleven for the single-player practice mode. */
+export const CPU_SQUADS = {
+  en: ['Chip', 'Ada', 'Turing', 'Byte', 'Pixel', 'Grace', 'Dennis', 'Linus', 'Hopper', 'Watson', 'Kernel'],
+  bn: ['চিপ', 'অ্যাডা', 'টিউরিং', 'বাইট', 'পিক্সেল', 'গ্রেস', 'ডেনিস', 'লিনাস', 'হপার', 'ওয়াটসন', 'কার্নেল'],
+} as const
+
 export const SPIN = {
   /**
    * Server-side failure fallback if a started spin never receives its stop
