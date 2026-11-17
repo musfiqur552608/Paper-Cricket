@@ -202,7 +202,7 @@ $$;
 
 create or replace function public.admin_notice_save(
   p_secret text,
-  p_id uuid default null,
+  p_id uuid,
   p_title text,
   p_body text,
   p_type text,
