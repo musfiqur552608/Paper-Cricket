@@ -4,6 +4,14 @@ import i18n from './i18n'
 import { LandingPage } from './features/landing/LandingPage'
 import { RoomPage } from './features/room/RoomPage'
 import { SoloPage } from './features/solo/SoloPage'
+import { NoticeBanner } from './components/admin/NoticeBanner'
+import { AdminLayout } from './features/admin/AdminLayout'
+import { AdminLogin } from './features/admin/AdminLogin'
+import { AdminDashboard } from './features/admin/AdminDashboard'
+import { AdminRooms } from './features/admin/AdminRooms'
+import { AdminNotices } from './features/admin/AdminNotices'
+import { AdminSeo } from './features/admin/AdminSeo'
+import { AdminSettings } from './features/admin/AdminSettings'
 import { ToastViewport } from './components/ui/ToastViewport'
 
 interface BoundaryState {
@@ -48,6 +56,7 @@ function RootLayout() {
   return (
     <ErrorBoundary key={location.pathname}>
       <Outlet />
+      <NoticeBanner />
       <ToastViewport />
     </ErrorBoundary>
   )
@@ -60,6 +69,18 @@ const router = createBrowserRouter([
       { path: '/', element: <LandingPage /> },
       { path: '/room/:code', element: <RoomPage /> },
       { path: '/solo', element: <SoloPage /> },
+      {
+        path: '/admin',
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <AdminDashboard /> },
+          { path: 'login', element: <AdminLogin /> },
+          { path: 'rooms', element: <AdminRooms /> },
+          { path: 'notices', element: <AdminNotices /> },
+          { path: 'seo', element: <AdminSeo /> },
+          { path: 'settings', element: <AdminSettings /> },
+        ],
+      },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
