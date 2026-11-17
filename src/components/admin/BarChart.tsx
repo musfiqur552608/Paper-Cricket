@@ -26,9 +26,6 @@ export function BarChart({ title, data, subtitle, height = 220 }: BarChartProps)
   }
 
   const max = Math.max(...data.map((d) => d.value), 1)
-  const h = height - 60
-  const gap = 14
-  const barW = 26
   const colors = ['#234e8b', '#c8544a', '#1f5c3d', '#92400e', '#6b21a8', '#0f766e']
 
   return (

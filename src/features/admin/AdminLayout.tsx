@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
   ShieldAlert,
   FileText,
-  Globe,
   Settings,
   LogOut,
   Menu,
-  X,
   Users as UsersIcon,
 } from 'lucide-react'
 import { useAdminStore } from '../../store/admin'

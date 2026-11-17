@@ -11,9 +11,9 @@ export function AdminSeo() {
   const { secret } = useAdminStore()
   const [settings, setSettings] = useState<Array<{
     pagePath: string
-    title: string | null
-    description: string | null
-    ogImage: string | null
+    title: string
+    description: string
+    ogImage: string
   }>>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)

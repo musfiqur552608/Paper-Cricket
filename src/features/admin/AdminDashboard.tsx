@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import {
-  Activity,
-  Users as UsersIcon,
-  Clock,
-  Trophy,
-  Target,
-  RefreshCw,
-} from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { useAdminStore } from '../../store/admin'
 import { getDashboardStats } from '../../lib/adminApi'
 import { StatCard } from '../../components/admin/StatCard'
@@ -91,8 +84,8 @@ export function AdminDashboard() {
   const outcomeItems: OutcomeItem[] = [
     { label: t('admin.sixes'), value: stats?.totalSixes ?? 0, color: '#c8544a' },
     { label: t('admin.fours'), value: stats?.totalFours ?? 0, color: '#234e8b' },
-    { label: t('admin.noBalls'), value: stats?.totalNoBalls ?? 0, color: '#92400e' },
-    { label: t('admin.wides'), value: stats?.totalWides ?? 0, color: '#6b21a8' },
+    { label: t('admin.totalBalls'), value: stats?.totalBalls ?? 0, color: '#92400e' },
+    { label: t('admin.totalRuns'), value: stats?.totalRuns ?? 0, color: '#6b21a8' },
   ]
 
   const statusItems: StatusItem[] = [

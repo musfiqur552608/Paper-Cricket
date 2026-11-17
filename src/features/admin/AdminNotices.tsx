@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { Plus, Trash2, Save, Edit3, Clock } from 'lucide-react'
+import { Plus, Trash2, Save, Edit3 } from 'lucide-react'
 import { Dialog } from '../../components/ui/Dialog'
 import { useAdminStore } from '../../store/admin'
 import { getNotices, saveNotice, deleteNotice } from '../../lib/adminApi'
 
-const TYPE_LABEL: Record<string, string> = {
+const TYPE_LABEL: Record<"info" | "success" | "warning" | "error", string> = {
   info: 'admin.info',
   success: 'admin.success',
   warning: 'admin.warning',
@@ -68,10 +68,11 @@ export function AdminNotices() {
     if (!form.title.trim() || !form.body.trim()) return
     setSaving(true)
     try {
+      const expiresAt = form.expiresAt ? form.expiresAt : null
       if (editing?.id) {
-        await saveNotice(secret, { ...form, id: editing.id, expiresAt: form.expiresAt || null })
+        await saveNotice(secret, { ...form, id: editing.id, expiresAt })
       } else {
-        await saveNotice(secret, { ...form, expiresAt: form.expiresAt || null })
+        await saveNotice(secret, { ...form, expiresAt })
       }
       setOpen(false)
       setEditing(null)

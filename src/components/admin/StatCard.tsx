@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
-import { useTranslation } from 'react-i18next'
-import { TrendingUp, Users, Clock, BookOpen, AlertCircle } from 'lucide-react'
+import { TrendingUp, Users, Clock, AlertCircle } from 'lucide-react'
 import clsx from 'clsx'
 
 type StatVariant = 'primary' | 'pencil' | 'leaf' | 'alert'
@@ -27,7 +26,6 @@ export function StatCard({
   variant = 'primary',
   trend,
 }: StatCardProps) {
-  const { t } = useTranslation()
   const Icon = VARIANT[variant].icon
 
   return (

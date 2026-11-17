@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import clsx from 'clsx'
 
 interface ChartPoint {
   label: string
@@ -31,7 +30,7 @@ export function LineChart({ title, data, subtitle, height = 220, accent = '#234e
   const min = Math.min(...values, 0)
   const range = max - min || 1
   const w = 100
-  const h = height - 40
+  const h = height != null ? height - 40 : 180
   const padding = { left: 40, right: 20, top: 10, bottom: 34 }
 
   const points = data.map((d, i) => {
@@ -44,7 +43,12 @@ export function LineChart({ title, data, subtitle, height = 220, accent = '#234e
     .map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`))
     .join('')
 
-  const areaPath = `M${padding.left},${padding.top + h} L${points[0].x},${points[0].y} ${path} L${points[points.length - 1].x},${padding.top + h} Z`
+  // guards ensure data.length > 0 when we reach here
+  const first = points[0]
+  const last = points[points.length - 1]
+  const areaPath = first
+    ? `M${padding.left},${padding.top + h} L${first.x},${first.y} ${path} L${last.x},${padding.top + h} Z`
+    : `M${padding.left},${padding.top + h} L${padding.left},${padding.top + h} Z`
 
   return (
     <motion.div
@@ -72,8 +76,7 @@ export function LineChart({ title, data, subtitle, height = 220, accent = '#234e
           </defs>
           {/* Grid lines */}
           {[0.25, 0.5, 0.75].forEach((ratio) => {
-            const gy = padding.top + h - ratio * h
-            // eslint-disable-next-line no-console
+            // vertical grid line position calc (unused in this render path)
           })}
           {/* Area fill */}
           <motion.path

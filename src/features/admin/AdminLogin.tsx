@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ShieldAlert, LogIn, ArrowRight } from 'lucide-react'
 import { useAdminStore } from '../../store/admin'
