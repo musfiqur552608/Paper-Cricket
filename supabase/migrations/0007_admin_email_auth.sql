@@ -47,7 +47,7 @@ create table if not exists public.admin_emails (
 );
 
 alter table public.admin_emails enable row level security;
-revoke all on table public.admin_emails from anon, authenticated;
+revoke all on table public.admin_emails from public, anon, authenticated;
 
 -- The one source of truth for admin access. SECURITY DEFINER so it can read
 -- the allowlist even though callers have no table grants.
@@ -65,7 +65,7 @@ as $$
   );
 $$;
 
-revoke all on function public.is_admin() from public;
+revoke all on function public.is_admin() from public, anon;
 grant execute on function public.is_admin() to authenticated;
 
 -- Returns who the caller is and whether they are an admin. The client uses
@@ -83,7 +83,7 @@ as $$
   );
 $$;
 
-revoke all on function public.admin_me() from public;
+revoke all on function public.admin_me() from public, anon;
 grant execute on function public.admin_me() to authenticated;
 
 -- ── Admin RPCs (security definer → bypasses per-member RLS) ─────────────────
@@ -309,13 +309,13 @@ $$;
 
 -- ── Grants ──────────────────────────────────────────────────────────────────
 
-revoke all on function public.admin_dashboard_stats() from public;
-revoke all on function public.admin_rooms_all() from public;
-revoke all on function public.admin_notices_list() from public;
-revoke all on function public.admin_notice_save(uuid, text, text, text, boolean, timestamptz) from public;
-revoke all on function public.admin_notice_delete(uuid) from public;
-revoke all on function public.admin_seo_list() from public;
-revoke all on function public.admin_seo_save(text, text, text, text) from public;
+revoke all on function public.admin_dashboard_stats() from public, anon;
+revoke all on function public.admin_rooms_all() from public, anon;
+revoke all on function public.admin_notices_list() from public, anon;
+revoke all on function public.admin_notice_save(uuid, text, text, text, boolean, timestamptz) from public, anon;
+revoke all on function public.admin_notice_delete(uuid) from public, anon;
+revoke all on function public.admin_seo_list() from public, anon;
+revoke all on function public.admin_seo_save(text, text, text, text) from public, anon;
 
 grant execute on function public.admin_dashboard_stats() to authenticated;
 grant execute on function public.admin_rooms_all() to authenticated;
