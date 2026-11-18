@@ -309,6 +309,14 @@ $$;
 
 -- ── Grants ──────────────────────────────────────────────────────────────────
 
+revoke all on function public.admin_dashboard_stats() from public;
+revoke all on function public.admin_rooms_all() from public;
+revoke all on function public.admin_notices_list() from public;
+revoke all on function public.admin_notice_save(uuid, text, text, text, boolean, timestamptz) from public;
+revoke all on function public.admin_notice_delete(uuid) from public;
+revoke all on function public.admin_seo_list() from public;
+revoke all on function public.admin_seo_save(text, text, text, text) from public;
+
 grant execute on function public.admin_dashboard_stats() to authenticated;
 grant execute on function public.admin_rooms_all() to authenticated;
 grant execute on function public.admin_notices_list() to authenticated;
