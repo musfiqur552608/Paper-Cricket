@@ -59,7 +59,7 @@ export function NoticeBanner() {
       className="sticky top-0 z-[85] w-full border-b border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-[10px]"
     >
       {active.map((notice) => {
-        const style = TYPE_COLOR[notice.type] || TYPE_COLOR.info
+        const style = (TYPE_COLOR[notice.type as keyof typeof TYPE_COLOR] ?? TYPE_COLOR.info)!
         return (
           <motion.div
             key={notice.id}

@@ -13,14 +13,17 @@ const TYPE_LABEL: Record<"info" | "success" | "warning" | "error", string> = {
   error: 'admin.error',
 }
 
+type NoticeType = 'info' | 'success' | 'warning' | 'error'
+
 export function AdminNotices() {
   const { t } = useTranslation()
   const { secret } = useAdminStore()
+  if (!secret) return null
   const [notices, setNotices] = useState<Array<{
     id: string
     title: string
     body: string
-    type: string
+    type: NoticeType
     isActive: boolean
     expiresAt: string | null
     createdAt: string
@@ -28,12 +31,18 @@ export function AdminNotices() {
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<{ id: string } | null>(null)
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    title: string
+    body: string
+    type: NoticeType
+    isActive: boolean
+    expiresAt: string
+  }>({
     title: '',
     body: '',
-    type: 'info' as const,
+    type: 'info',
     isActive: true,
-    expiresAt: '' as string,
+    expiresAt: '',
   })
   const [saving, setSaving] = useState(false)
 
@@ -57,7 +66,7 @@ export function AdminNotices() {
     setForm({
       title: notice.title,
       body: notice.body,
-      type: notice.type as 'info' | 'success' | 'warning' | 'error',
+      type: notice.type,
       isActive: notice.isActive,
       expiresAt: notice.expiresAt ?? '',
     })
@@ -218,7 +227,7 @@ export function AdminNotices() {
       >
         <form onSubmit={(e) => { e.preventDefault(); handleSave() }} className="space-y-4">
           <div>
-            <label className="label">{t('admin.title')}</label>
+            <label className="label">{t('admin.noticeTitle')}</label>
             <input
               type="text"
               value={form.title}

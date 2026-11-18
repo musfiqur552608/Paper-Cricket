@@ -4,17 +4,13 @@ import { motion } from 'framer-motion'
 import { Save, Image as ImageIcon, Edit3 } from 'lucide-react'
 import { Dialog } from '../../components/ui/Dialog'
 import { useAdminStore } from '../../store/admin'
-import { getSeoSettings, saveSeoSetting } from '../../lib/adminApi'
+import { getSeoSettings, saveSeoSetting, type AdminSeoSetting } from '../../lib/adminApi'
 
 export function AdminSeo() {
   const { t } = useTranslation()
   const { secret } = useAdminStore()
-  const [settings, setSettings] = useState<Array<{
-    pagePath: string
-    title: string
-    description: string
-    ogImage: string
-  }>>([])
+  if (!secret) return null
+  const [settings, setSettings] = useState<AdminSeoSetting[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)

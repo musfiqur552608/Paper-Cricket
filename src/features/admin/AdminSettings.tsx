@@ -1,11 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { ShieldAlert, Key, Database, Monitor } from 'lucide-react'
-import { useAdminStore } from '../../store/admin'
 
 export function AdminSettings() {
   const { t } = useTranslation()
-  const { secret } = useAdminStore()
   const configured = Boolean(import.meta.env.VITE_ADMIN_SECRET)
 
   if (!isAdmin()) return null

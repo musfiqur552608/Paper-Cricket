@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -22,9 +22,8 @@ const NAV = [
   { path: '/admin/settings', label: 'admin.settings', icon: Settings },
 ]
 
-export function AdminLayout({ children }: { children: React.ReactNode }) {
+export function AdminLayout() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const location = useLocation()
   const { isAdmin, logout } = useAdminStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -144,7 +143,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       )}
 
       <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 pb-12 pt-1">
-        {children}
+        <Outlet />
       </main>
     </div>
   )

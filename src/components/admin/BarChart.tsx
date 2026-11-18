@@ -14,7 +14,7 @@ interface BarChartProps {
   height?: number
 }
 
-export function BarChart({ title, data, subtitle, height = 220 }: BarChartProps) {
+export function BarChart({ title, data, subtitle }: BarChartProps) {
   const { t } = useTranslation()
 
   if (data.length === 0) {

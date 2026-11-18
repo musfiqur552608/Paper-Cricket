@@ -44,8 +44,8 @@ export function LineChart({ title, data, subtitle, height = 220, accent = '#234e
     .join('')
 
   // guards ensure data.length > 0 when we reach here
-  const first = points[0]
-  const last = points[points.length - 1]
+  const first = points[0]!
+  const last = points[points.length - 1]!
   const areaPath = first
     ? `M${padding.left},${padding.top + h} L${first.x},${first.y} ${path} L${last.x},${padding.top + h} Z`
     : `M${padding.left},${padding.top + h} L${padding.left},${padding.top + h} Z`
@@ -74,10 +74,7 @@ export function LineChart({ title, data, subtitle, height = 220, accent = '#234e
               <stop offset="100%" stopColor={accent} stopOpacity="0.08" />
             </linearGradient>
           </defs>
-          {/* Grid lines */}
-          {[0.25, 0.5, 0.75].forEach((ratio) => {
-            // vertical grid line position calc (unused in this render path)
-          })}
+          {/* Grid lines (calculation only, not rendered in this path) */}
           {/* Area fill */}
           <motion.path
             d={areaPath}
@@ -115,33 +112,39 @@ export function LineChart({ title, data, subtitle, height = 220, accent = '#234e
             />
           ))}
           {/* Axis labels */}
-          {data.map((d, i) => (
-            <text
-              key={i}
-              x={points[i].x}
-              y={padding.top + h + 20}
-              textAnchor="middle"
-              fontSize="9"
-              fill="var(--text-slate-500)"
-              className="dark:fill-slate-400"
-            >
-              {d.label}
-            </text>
-          ))}
-          {data.map((d, i) => (
-            <text
-              key={`v-${i}`}
-              x={points[i].x}
-              y={points[i].y - 6}
-              textAnchor="middle"
-              fontSize="10"
-              fontWeight="700"
-              fill={accent}
-              className="dark:fill-ink-soft"
-            >
-              {d.value}
-            </text>
-          ))}
+          {data.map((d, i) => {
+              const pt = points[i]!
+              return (
+                <text
+                  key={i}
+                  x={pt.x}
+                  y={padding.top + h + 20}
+                  textAnchor="middle"
+                  fontSize="9"
+                  fill="var(--text-slate-500)"
+                  className="dark:fill-slate-400"
+                >
+                  {d.label}
+                </text>
+              )
+            })}
+          {data.map((d, i) => {
+              const pt = points[i]!
+              return (
+                <text
+                  key={`v-${i}`}
+                  x={pt.x}
+                  y={pt.y - 6}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fontWeight="700"
+                  fill={accent}
+                  className="dark:fill-ink-soft"
+                >
+                  {d.value}
+                </text>
+              )
+            })}
         </svg>
       </div>
     </motion.div>

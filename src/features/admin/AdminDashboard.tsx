@@ -35,6 +35,8 @@ export function AdminDashboard() {
     totalWickets: number
     totalSixes: number
     totalFours: number
+    totalNoBalls: number
+    totalWides: number
     totalHours: number
     hoursToday: number
     hoursWeek: number
@@ -67,6 +69,8 @@ export function AdminDashboard() {
           totalWickets: data.totalWickets,
           totalSixes: data.totalSixes,
           totalFours: data.totalFours,
+          totalNoBalls: data.totalNoBalls,
+          totalWides: data.totalWides,
           totalHours: data.totalHours,
           hoursToday: data.hoursToday,
           hoursWeek: data.hoursWeek,
@@ -84,8 +88,8 @@ export function AdminDashboard() {
   const outcomeItems: OutcomeItem[] = [
     { label: t('admin.sixes'), value: stats?.totalSixes ?? 0, color: '#c8544a' },
     { label: t('admin.fours'), value: stats?.totalFours ?? 0, color: '#234e8b' },
-    { label: t('admin.totalBalls'), value: stats?.totalBalls ?? 0, color: '#92400e' },
-    { label: t('admin.totalRuns'), value: stats?.totalRuns ?? 0, color: '#6b21a8' },
+    { label: t('admin.noBalls'), value: stats?.totalNoBalls ?? 0, color: '#92400e' },
+    { label: t('admin.wides'), value: stats?.totalWides ?? 0, color: '#6b21a8' },
   ]
 
   const statusItems: StatusItem[] = [
@@ -124,7 +128,7 @@ export function AdminDashboard() {
             onClick={handleRefresh}
             className="btn-ghost flex items-center gap-2 text-[13px] font-semibold"
           >
-            <RefreshCw size={16} className={motion ? 'animate-spin' : ''} />
+            <RefreshCw size={16} className="animate-spin" />
             {t('admin.refresh')}
           </button>
         </div>

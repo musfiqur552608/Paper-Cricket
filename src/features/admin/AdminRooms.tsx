@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { Search, Clock, Link as LinkIcon, XCircle } from 'lucide-react'
+import { Search, Clock, Link as LinkIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAdminStore } from '../../store/admin'
 import { getAllRooms } from '../../lib/adminApi'
