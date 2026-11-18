@@ -24,12 +24,16 @@ export function AdminLogin() {
     setSubmitting(true)
     try {
       await adminSignIn(email.trim(), password)
-      const ok = await refresh()
-      if (ok) {
+      const identity = await refresh()
+      if (identity.isAdmin) {
         navigate('/admin', { replace: true })
       } else {
         await adminSignOut()
-        setError(t('admin.notAdminAccount'))
+        if (identity.error) {
+          setError(t('admin.authSetupError'))
+        } else {
+          setError(t('admin.notAdminAccount', { email: identity.email ?? email.trim() }))
+        }
       }
     } catch {
       setError(t('admin.loginFailed'))

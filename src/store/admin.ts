@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { adminMe, adminSignOut } from '../lib/adminApi'
+import { adminMe, adminSignOut, type AdminIdentity } from '../lib/adminApi'
 import { adminSupabase } from '../lib/supabase/adminClient'
 
 export type AdminSession = {
@@ -10,7 +10,7 @@ export type AdminSession = {
   /** True while the initial session check is still running. */
   checking: boolean
   /** Re-check the current Supabase session against the server allowlist. */
-  refresh: () => Promise<boolean>
+  refresh: () => Promise<AdminIdentity>
   /** Sign out of the admin client only (the player session is untouched). */
   logout: () => Promise<void>
 }
@@ -21,9 +21,9 @@ export const useAdminStore = create<AdminSession>()((set) => ({
   checking: true,
 
   refresh: async () => {
-    const { isAdmin, email } = await adminMe()
-    set({ isAdmin, email, checking: false })
-    return isAdmin
+    const identity = await adminMe()
+    set({ isAdmin: identity.isAdmin, email: identity.email, checking: false })
+    return identity
   },
 
   logout: async () => {

@@ -86,6 +86,8 @@ export interface AdminSeoSetting {
 export interface AdminIdentity {
   isAdmin: boolean
   email: string | null
+  /** Server-side error while checking admin status (e.g. migration missing). */
+  error: string | null
 }
 
 // ── Auth (Supabase email + password) ────────────────────────────────────────
@@ -108,18 +110,22 @@ export async function adminSignOut(): Promise<void> {
  * when there is no session, so regular visitors never hit the RPC.
  */
 export async function adminMe(): Promise<AdminIdentity> {
-  if (!adminSupabase) return { isAdmin: false, email: null }
+  if (!adminSupabase) {
+    return { isAdmin: false, email: null, error: 'Supabase is not configured' }
+  }
 
   const { data: sessionData } = await adminSupabase.auth.getSession()
-  if (!sessionData.session) return { isAdmin: false, email: null }
+  if (!sessionData.session) return { isAdmin: false, email: null, error: null }
 
+  const sessionEmail = sessionData.session.user.email ?? null
   const { data, error } = await adminSupabase.rpc('admin_me')
-  if (error) return { isAdmin: false, email: null }
+  if (error) return { isAdmin: false, email: sessionEmail, error: error.message }
 
   const result = data as { isAdmin?: boolean; email?: string | null } | null
   return {
     isAdmin: Boolean(result?.isAdmin),
-    email: result?.email ?? null,
+    email: result?.email ?? sessionEmail,
+    error: null,
   }
 }
 
