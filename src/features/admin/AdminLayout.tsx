@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -24,11 +24,17 @@ const NAV = [
 
 export function AdminLayout() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const location = useLocation()
   const { isAdmin, logout } = useAdminStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  if (!isAdmin) return null
+  const isLoginRoute = location.pathname === '/admin/login'
+
+  if (!isAdmin && !isLoginRoute) {
+    navigate('/admin/login', { replace: true })
+    return null
+  }
 
   return (
     <div className="relative min-h-dvh overflow-x-clip">
