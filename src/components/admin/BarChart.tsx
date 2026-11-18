@@ -1,72 +1,64 @@
 import { motion } from 'framer-motion'
-import { useTranslation } from 'react-i18next'
 
-interface BarItem {
+export interface BarItem {
   label: string
   value: number
   color?: string
 }
 
 interface BarChartProps {
-  title: string
   data: BarItem[]
-  subtitle?: string
-  height?: number
+  emptyLabel?: string
+  valueFormatter?: (value: number) => string
 }
 
-export function BarChart({ title, data, subtitle }: BarChartProps) {
-  const { t } = useTranslation()
+const COLORS = [
+  'var(--chart-blue)',
+  'var(--chart-green)',
+  'var(--chart-red)',
+  'var(--chart-amber)',
+  'var(--chart-purple)',
+  'var(--chart-gray)',
+]
 
+export function BarChart({ data, emptyLabel, valueFormatter = (value) => String(value) }: BarChartProps) {
   if (data.length === 0) {
-    return (
-      <div className="paper-card p-6 h-[220px] flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
-        {t('admin.noData')}
-      </div>
-    )
+    return <div className="flex h-[180px] items-center justify-center text-sm text-slate-400">{emptyLabel}</div>
   }
 
-  const max = Math.max(...data.map((d) => d.value), 1)
-  const colors = ['#234e8b', '#c8544a', '#1f5c3d', '#92400e', '#6b21a8', '#0f766e']
+  const total = data.reduce((sum, item) => sum + item.value, 0)
+  const max = Math.max(...data.map((item) => item.value), 1)
 
   return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      className="paper-card p-4 sm:p-5 overflow-hidden"
-    >
-      <div className="mb-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{title}</p>
-        {subtitle && <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{subtitle}</p>}
-      </div>
-      <div className="flex items-end justify-between h-[200px] w-full pt-2 pb-10">
-        {data.map((item, i) => {
-          const pct = max === 0 ? 0 : (item.value / max) * 100
-          const color = item.color ?? colors[i % colors.length]
-          return (
-            <motion.div
-              key={item.label}
-              className="flex flex-col items-center gap-2"
-              initial={{ scaleY: 0, opacity: 0 }}
-              animate={{ scaleY: 1, opacity: 1 }}
-              transition={{ delay: i * 0.06, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div
-                className="w-[26px] rounded-t-xl transition-all duration-300 hover:scale-x-110"
-                style={{
-                  height: `${pct}%`,
-                  background: `linear-gradient(to top, ${color}, ${color}dd)`,
-                  boxShadow: `0 0 14px ${color}40`,
-                }}
+    <div className="space-y-4">
+      {data.map((item, index) => {
+        const color = item.color ?? COLORS[index % COLORS.length]!
+        const width = (item.value / max) * 100
+        const share = total > 0 ? Math.round((item.value / total) * 100) : 0
+        return (
+          <div key={item.label}>
+            <div className="mb-1.5 flex items-baseline justify-between gap-3">
+              <span className="flex min-w-0 items-center gap-2 text-xs font-semibold text-ink-deep">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                <span className="truncate">{item.label}</span>
+              </span>
+              <span className="shrink-0 text-[11px] tabular-nums text-slate-500 dark:text-slate-400">
+                {valueFormatter(item.value)}
+                <span className="ml-1 text-[10px] text-slate-400">{share}%</span>
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-[var(--ink-ghost-2)]">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ backgroundColor: color }}
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.max(width, item.value > 0 ? 2 : 0)}%` }}
+                transition={{ duration: 0.6, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
               />
-              <span className="text-[10px] font-bold text-ink-deep dark:text-ink-deep leading-none">
-                {item.value}
-              </span>
-              <span className="text-[9px] text-slate-500 dark:text-slate-400 leading-none">
-                {item.label}
-              </span>
-            </motion.div>
-          )
-        })}
-      </div>
-    </motion.div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
   )
 }

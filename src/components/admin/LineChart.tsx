@@ -1,152 +1,278 @@
+import { useId, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { useTranslation } from 'react-i18next'
 
-interface ChartPoint {
+export interface ChartPoint {
   label: string
   value: number
+  fullLabel?: string
 }
 
 interface LineChartProps {
-  title: string
   data: ChartPoint[]
-  subtitle?: string
-  height?: number
   accent?: string
+  height?: number
+  valueFormatter?: (value: number) => string
+  emptyLabel?: string
+  ariaLabel?: string
 }
 
-export function LineChart({ title, data, subtitle, height = 220, accent = '#234e8b' }: LineChartProps) {
-  const { t } = useTranslation()
+const WIDTH = 720
+
+function niceMax(value: number): number {
+  if (value <= 0) return 4
+  const rough = value / 4
+  const power = Math.pow(10, Math.floor(Math.log10(rough)))
+  const step = [1, 2, 2.5, 5, 10].find((candidate) => candidate * power >= rough) ?? 10
+  return step * power * 4
+}
+
+function formatTick(value: number): string {
+  if (value >= 1000) return `${Math.round(value / 100) / 10}k`
+  if (Number.isInteger(value)) return String(value)
+  return value.toFixed(1)
+}
+
+function smoothPath(points: Array<{ x: number; y: number }>): string {
+  if (points.length === 0) return ''
+  if (points.length === 1) return `M${points[0]!.x},${points[0]!.y}`
+  let d = `M${points[0]!.x},${points[0]!.y}`
+  for (let i = 1; i < points.length; i += 1) {
+    const prev = points[i - 1]!
+    const curr = points[i]!
+    const midX = (prev.x + curr.x) / 2
+    d += ` C${midX},${prev.y} ${midX},${curr.y} ${curr.x},${curr.y}`
+  }
+  return d
+}
+
+export function LineChart({
+  data,
+  accent = 'var(--ink-mid)',
+  height = 260,
+  valueFormatter = (value) => String(value),
+  emptyLabel,
+  ariaLabel,
+}: LineChartProps) {
+  const gradientId = useId().replace(/[^a-zA-Z0-9_-]/g, '')
+  const [hover, setHover] = useState<number | null>(null)
+
+  const padding = { left: 46, right: 18, top: 18, bottom: 34 }
+  const plotWidth = WIDTH - padding.left - padding.right
+  const plotHeight = height - padding.top - padding.bottom
+  const lastIndex = data.length - 1
+
+  const chart = useMemo(() => {
+    const values = data.map((point) => point.value)
+    const max = niceMax(Math.max(...values, 0))
+    const points = data.map((point, index) => ({
+      x: padding.left + (index / Math.max(data.length - 1, 1)) * plotWidth,
+      y: padding.top + plotHeight - (Math.max(point.value, 0) / max) * plotHeight,
+    }))
+    return { max, points, total: values.reduce((sum, value) => sum + value, 0) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, height])
 
   if (data.length === 0) {
     return (
-      <div className="paper-card p-6 h-[220px] flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
-        {t('admin.noData')}
+      <div className="flex h-[220px] items-center justify-center text-sm text-slate-400">
+        {emptyLabel}
       </div>
     )
   }
 
-  const values = data.map((d) => d.value)
-  const max = Math.max(...values, 1)
-  const min = Math.min(...values, 0)
-  const range = max - min || 1
-  const w = 100
-  const h = height != null ? height - 40 : 180
-  const padding = { left: 40, right: 20, top: 10, bottom: 34 }
-
-  const points = data.map((d, i) => {
-    const x = padding.left + (i / Math.max(data.length - 1, 1)) * (w - padding.left - padding.right)
-    const y = padding.top + h - ((d.value - min) / range) * h
-    return { x, y }
-  })
-
-  const path = points
-    .map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`))
-    .join('')
-
-  // guards ensure data.length > 0 when we reach here
+  const { max, points, total } = chart
+  const linePath = smoothPath(points)
   const first = points[0]!
-  const last = points[points.length - 1]!
-  const areaPath = first
-    ? `M${padding.left},${padding.top + h} L${first.x},${first.y} ${path} L${last.x},${padding.top + h} Z`
-    : `M${padding.left},${padding.top + h} L${padding.left},${padding.top + h} Z`
+  const last = points[lastIndex]!
+  const baseline = padding.top + plotHeight
+  const areaPath = `${linePath} L${last.x},${baseline} L${first.x},${baseline} Z`
+
+  const labelStep = data.length <= 8 ? 1 : Math.ceil(data.length / 7)
+  const labelIndices = new Set<number>()
+  for (let i = 0; i < data.length; i += labelStep) labelIndices.add(i)
+  const lastLabelGap = lastIndex - (labelIndices.size - 1) * labelStep
+  if (labelIndices.size > 0 && lastLabelGap > labelStep / 2) labelIndices.add(lastIndex)
+
+  const hovered = hover != null ? data[hover] : null
+  const hoveredPoint = hover != null ? points[hover] : null
+  const bubbleWidth = 138
+  const bubbleHeight = 42
+  const bubbleX = hoveredPoint
+    ? Math.min(Math.max(hoveredPoint.x - bubbleWidth / 2, padding.left), WIDTH - padding.right - bubbleWidth)
+    : 0
+  const bubbleY = hoveredPoint
+    ? hoveredPoint.y - bubbleHeight - 12 < padding.top
+      ? hoveredPoint.y + 14
+      : hoveredPoint.y - bubbleHeight - 12
+    : 0
 
   return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      className="paper-card p-4 sm:p-5 overflow-hidden"
-    >
-      <div className="mb-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{title}</p>
-        {subtitle && <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{subtitle}</p>}
-      </div>
-      <div className="relative h-[220px] w-full">
-        <svg
-          width="100%"
-          height={height}
-          viewBox={`0 0 ${w + padding.left + padding.right} ${height}`}
-          className="text-ink-deep dark:text-ink-deep"
-          aria-label={title}
-          role="img"
-        >
-          <defs>
-            <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={accent} stopOpacity="0.55" />
-              <stop offset="100%" stopColor={accent} stopOpacity="0.08" />
-            </linearGradient>
-          </defs>
-          {/* Grid lines (calculation only, not rendered in this path) */}
-          {/* Area fill */}
-          <motion.path
-            d={areaPath}
-            fill="url(#chart-gradient)"
-            className="dark:fill-ink/15"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-          />
-          {/* Line */}
-          <motion.path
-            d={path}
-            fill="none"
-            stroke={accent}
-            strokeWidth={2.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="dark:stroke-ink-soft"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-          />
-          {/* Dots */}
-          {points.map((p, i) => (
-            <motion.circle
-              key={i}
-              cx={p.x}
-              cy={p.y}
-              r={0}
+    <div className="relative">
+      <svg
+        viewBox={`0 0 ${WIDTH} ${height}`}
+        className="h-auto w-full overflow-visible"
+        role="img"
+        aria-label={ariaLabel}
+        onMouseLeave={() => setHover(null)}
+      >
+        <defs>
+          <linearGradient id={`grad-${gradientId}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={accent} stopOpacity="0.32" />
+            <stop offset="100%" stopColor={accent} stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
+
+        {/* Horizontal grid + y-axis labels */}
+        {[0, 1, 2, 3, 4].map((tick) => {
+          const value = (max / 4) * tick
+          const y = baseline - (tick / 4) * plotHeight
+          return (
+            <g key={tick}>
+              <line
+                x1={padding.left}
+                x2={WIDTH - padding.right}
+                y1={y}
+                y2={y}
+                stroke="var(--card-border)"
+                strokeWidth={1}
+                strokeDasharray={tick === 0 ? undefined : '3 6'}
+              />
+              <text
+                x={padding.left - 10}
+                y={y + 3.5}
+                textAnchor="end"
+                fontSize="9.5"
+                fill="var(--text-slate-500)"
+              >
+                {formatTick(value)}
+              </text>
+            </g>
+          )
+        })}
+
+        {/* X-axis labels */}
+        {data.map((point, index) =>
+          labelIndices.has(index) ? (
+            <text
+              key={`x-${index}`}
+              x={points[index]!.x}
+              y={baseline + 20}
+              textAnchor={index === 0 ? 'start' : index === lastIndex ? 'end' : 'middle'}
+              fontSize="9.5"
+              fill="var(--text-slate-500)"
+            >
+              {point.label}
+            </text>
+          ) : null,
+        )}
+
+        {/* Area + line */}
+        <motion.path
+          key={`area-${data.length}-${accent}`}
+          d={areaPath}
+          fill={`url(#grad-${gradientId})`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        />
+        <motion.path
+          key={`line-${data.length}-${accent}`}
+          d={linePath}
+          fill="none"
+          stroke={accent}
+          strokeWidth={2.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+        />
+
+        {/* Dots for short ranges */}
+        {data.length <= 14 &&
+          points.map((point, index) => (
+            <circle
+              key={`dot-${index}`}
+              cx={point.x}
+              cy={point.y}
+              r={index === hover ? 4.5 : 3}
               fill={accent}
-              className="dark:fill-ink-soft"
-              initial={{ r: 0 }}
-              animate={{ r: 3.5 }}
-              transition={{ delay: 0.3 + i * 0.05, duration: 0.3 }}
+              stroke="var(--card-bg)"
+              strokeWidth={2}
             />
           ))}
-          {/* Axis labels */}
-          {data.map((d, i) => {
-              const pt = points[i]!
-              return (
-                <text
-                  key={i}
-                  x={pt.x}
-                  y={padding.top + h + 20}
-                  textAnchor="middle"
-                  fontSize="9"
-                  fill="var(--text-slate-500)"
-                  className="dark:fill-slate-400"
-                >
-                  {d.label}
-                </text>
-              )
-            })}
-          {data.map((d, i) => {
-              const pt = points[i]!
-              return (
-                <text
-                  key={`v-${i}`}
-                  x={pt.x}
-                  y={pt.y - 6}
-                  textAnchor="middle"
-                  fontSize="10"
-                  fontWeight="700"
-                  fill={accent}
-                  className="dark:fill-ink-soft"
-                >
-                  {d.value}
-                </text>
-              )
-            })}
-        </svg>
-      </div>
-    </motion.div>
+        {data.length > 14 && (
+          <circle cx={last.x} cy={last.y} r={3.5} fill={accent} stroke="var(--card-bg)" strokeWidth={2} />
+        )}
+
+        {/* Hover targets */}
+        {points.map((point, index) => {
+          const band = plotWidth / Math.max(data.length - 1, 1)
+          return (
+            <rect
+              key={`hit-${index}`}
+              x={point.x - band / 2}
+              y={padding.top}
+              width={band}
+              height={plotHeight}
+              fill="transparent"
+              onMouseEnter={() => setHover(index)}
+              onFocus={() => setHover(index)}
+              tabIndex={-1}
+            />
+          )
+        })}
+
+        {/* Crosshair + tooltip */}
+        {hovered && hoveredPoint && (
+          <g pointerEvents="none">
+            <line
+              x1={hoveredPoint.x}
+              x2={hoveredPoint.x}
+              y1={padding.top}
+              y2={baseline}
+              stroke="var(--ink-ghost)"
+              strokeWidth={1.5}
+              strokeDasharray="3 4"
+            />
+            <circle
+              cx={hoveredPoint.x}
+              cy={hoveredPoint.y}
+              r={5}
+              fill={accent}
+              stroke="var(--card-bg)"
+              strokeWidth={2.5}
+            />
+            <g transform={`translate(${bubbleX},${bubbleY})`}>
+              <rect
+                width={bubbleWidth}
+                height={bubbleHeight}
+                rx={9}
+                fill="var(--card-bg)"
+                stroke="var(--card-border)"
+              />
+              <text x={11} y={16} fontSize="9" fill="var(--text-slate-500)">
+                {hovered.fullLabel ?? hovered.label}
+              </text>
+              <text x={11} y={32} fontSize="13" fontWeight="700" fill="var(--ink-deep)">
+                {valueFormatter(hovered.value)}
+              </text>
+            </g>
+          </g>
+        )}
+
+        {total === 0 && emptyLabel && (
+          <text
+            x={padding.left + plotWidth / 2}
+            y={padding.top + plotHeight / 2}
+            textAnchor="middle"
+            fontSize="12"
+            fill="var(--text-slate-500)"
+          >
+            {emptyLabel}
+          </text>
+        )}
+      </svg>
+    </div>
   )
 }

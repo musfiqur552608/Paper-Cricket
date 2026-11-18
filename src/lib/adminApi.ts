@@ -19,12 +19,38 @@ function toAppError(error: unknown): AppError {
   return new AppError(code, message)
 }
 
+export interface DailyStat {
+  date: string
+  matches: number
+  players: number
+  hours: number
+  runs: number
+  wickets: number
+}
+
+export interface HourlyStat {
+  hour: number
+  matches: number
+}
+
+export interface OutcomeStat {
+  key: string
+  value: number
+}
+
+export interface TopPlayer {
+  name: string
+  matches: number
+}
+
 export interface DashboardStats {
   totalRooms: number
   roomsLive: number
   roomsLobby: number
   roomsFinished: number
   roomsAbandoned: number
+  /** New in migration 0008; optional so the panel works before it is applied. */
+  activePlayers?: number
   totalPlayers: number
   playersToday: number
   playersWeek: number
@@ -35,6 +61,9 @@ export interface DashboardStats {
   matchesWeek: number
   matchesMonth: number
   matchesYear: number
+  matchesPrevWeek?: number
+  playersPrevWeek?: number
+  hoursPrevWeek?: number
   totalBalls: number
   totalRuns: number
   totalWickets: number
@@ -46,6 +75,15 @@ export interface DashboardStats {
   hoursToday: number
   hoursWeek: number
   hoursMonth: number
+  avgMatchMinutes?: number
+  avgRunsPerMatch?: number
+  avgBallsPerMatch?: number
+  completionRate?: number
+  rangeDays?: number
+  series?: DailyStat[]
+  hourly?: HourlyStat[]
+  outcomes?: OutcomeStat[]
+  topPlayers?: TopPlayer[]
   generatedAt: string
 }
 
@@ -131,8 +169,15 @@ export async function adminMe(): Promise<AdminIdentity> {
 
 // ── Data ────────────────────────────────────────────────────────────────────
 
-export async function getDashboardStats(): Promise<DashboardStats> {
-  return call<DashboardStats>('admin_dashboard_stats')
+export async function getDashboardStats(days = 30): Promise<DashboardStats> {
+  try {
+    return await call<DashboardStats>('admin_dashboard_stats', { p_days: days })
+  } catch (error) {
+    // The range-aware RPC ships with migration 0008. Until it is applied,
+    // fall back to the original zero-argument function so the panel still works.
+    if (error instanceof AppError && error.code === 'ADMIN_ACCESS_DENIED') throw error
+    return call<DashboardStats>('admin_dashboard_stats')
+  }
 }
 
 export async function getAllRooms(): Promise<AdminRoom[]> {
@@ -185,6 +230,10 @@ export async function saveSeoSetting(
     p_description: payload.description ?? null,
     p_og_image: payload.ogImage ?? null,
   })
+}
+
+export async function deleteSeoSetting(pagePath: string): Promise<void> {
+  await call<null>('admin_seo_delete', { p_page_path: pagePath })
 }
 
 /**

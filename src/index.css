@@ -8,6 +8,12 @@
   --paper: #faf5e7;
   --ink: #234e8b;
   --pencil: #c8544a;
+  --chart-blue: #234e8b;
+  --chart-green: #1f5c3d;
+  --chart-red: #c8544a;
+  --chart-amber: #a16207;
+  --chart-gray: #6b7280;
+  --chart-purple: #7c3aed;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --card-bg: rgba(255, 253, 247, 0.9);
   --card-border: rgba(216, 199, 162, 0.7);
@@ -80,6 +86,12 @@
   --paper: #0b0f1a;
   --ink: #7fa6e0;
   --pencil: #e98a80;
+  --chart-blue: #7fa6e0;
+  --chart-green: #93c5a8;
+  --chart-red: #e98a80;
+  --chart-amber: #fcd34d;
+  --chart-gray: #94a3b8;
+  --chart-purple: #c4b5fd;
   --card-bg: rgba(15, 23, 42, 0.88);
   --card-border: rgba(100, 116, 139, 0.34);
   --card-shine: rgba(255, 255, 255, 0.06);
