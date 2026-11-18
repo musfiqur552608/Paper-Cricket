@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { RefreshCw } from 'lucide-react'
-import { useAdminStore } from '../../store/admin'
 import { getDashboardStats } from '../../lib/adminApi'
 import { StatCard } from '../../components/admin/StatCard'
 import { LineChart } from '../../components/admin/LineChart'
@@ -15,7 +14,6 @@ interface StatusItem { label: string; value: number; color: string }
 
 export function AdminDashboard() {
   const { t } = useTranslation()
-  const { secret } = useAdminStore()
   const [stats, setStats] = useState<{
     totalRooms: number
     roomsLive: number
@@ -46,9 +44,8 @@ export function AdminDashboard() {
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
-    if (!secret) return
     setLoading(true)
-    getDashboardStats(secret)
+    getDashboardStats()
       .then((data) => {
         setStats({
           totalRooms: data.totalRooms,
@@ -79,7 +76,7 @@ export function AdminDashboard() {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [secret, refreshKey])
+  }, [refreshKey])
 
   const handleRefresh = () => {
     setRefreshKey((k) => k + 1)
@@ -108,8 +105,6 @@ export function AdminDashboard() {
     { label: 'Sat', value: Math.floor((stats?.matchesWeek ?? 0) / 6) },
     { label: 'Sun', value: stats?.matchesToday ?? 0 },
   ]
-
-  if (!isAdmin()) return null
 
   return (
     <div className="space-y-6">
@@ -221,15 +216,4 @@ export function AdminDashboard() {
       )}
     </div>
   )
-}
-
-function isAdmin(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    const stored = window.localStorage.getItem('pc.admin_secret')
-    const expected = import.meta.env.VITE_ADMIN_SECRET
-    return Boolean(stored && expected && stored === expected)
-  } catch {
-    return false
-  }
 }

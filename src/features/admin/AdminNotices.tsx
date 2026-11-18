@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Plus, Trash2, Save, Edit3 } from 'lucide-react'
 import { Dialog } from '../../components/ui/Dialog'
-import { useAdminStore } from '../../store/admin'
 import { getNotices, saveNotice, deleteNotice } from '../../lib/adminApi'
 
 const TYPE_LABEL: Record<"info" | "success" | "warning" | "error", string> = {
@@ -17,8 +16,6 @@ type NoticeType = 'info' | 'success' | 'warning' | 'error'
 
 export function AdminNotices() {
   const { t } = useTranslation()
-  const { secret } = useAdminStore()
-  if (!secret) return null
   const [notices, setNotices] = useState<Array<{
     id: string
     title: string
@@ -47,13 +44,12 @@ export function AdminNotices() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (!secret) return
     setLoading(true)
-    getNotices(secret)
+    getNotices()
       .then((data) => setNotices(data))
       .catch(() => setNotices([]))
       .finally(() => setLoading(false))
-  }, [secret])
+  }, [])
 
   const openCreate = () => {
     setEditing(null)
@@ -79,13 +75,13 @@ export function AdminNotices() {
     try {
       const expiresAt = form.expiresAt ? form.expiresAt : null
       if (editing?.id) {
-        await saveNotice(secret, { ...form, id: editing.id, expiresAt })
+        await saveNotice({ ...form, id: editing.id, expiresAt })
       } else {
-        await saveNotice(secret, { ...form, expiresAt })
+        await saveNotice({ ...form, expiresAt })
       }
       setOpen(false)
       setEditing(null)
-      const refreshed = await getNotices(secret)
+      const refreshed = await getNotices()
       setNotices(refreshed)
     } catch {
       // error surfaced by toast elsewhere
@@ -96,11 +92,9 @@ export function AdminNotices() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(t('admin.deleteNoticeConfirm'))) return
-    await deleteNotice(secret, id)
+    await deleteNotice(id)
     setNotices(notices.filter((n) => n.id !== id))
   }
-
-  if (!isAdmin()) return null
 
   return (
     <div className="space-y-6">
@@ -304,15 +298,4 @@ export function AdminNotices() {
       </Dialog>
     </div>
   )
-}
-
-function isAdmin(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    const stored = window.localStorage.getItem('pc.admin_secret')
-    const expected = import.meta.env.VITE_ADMIN_SECRET
-    return Boolean(stored && expected && stored === expected)
-  } catch {
-    return false
-  }
 }

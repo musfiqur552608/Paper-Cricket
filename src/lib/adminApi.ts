@@ -1,10 +1,11 @@
 import type { RoomDTO } from '../types/game'
+import { adminSupabase } from './supabase/adminClient'
 import { supabase } from './supabase/client'
 import { AppError } from './errors'
 
-async function call<T>(name: string, params: Record<string, unknown>): Promise<T> {
-  if (!supabase) throw new AppError('NOT_CONFIGURED')
-  const { data, error } = await supabase.rpc(name, params)
+async function call<T>(name: string, params: Record<string, unknown> = {}): Promise<T> {
+  if (!adminSupabase) throw new AppError('NOT_CONFIGURED')
+  const { data, error } = await adminSupabase.rpc(name, params)
   if (error) throw toAppError(error)
   return data as T
 }
@@ -82,20 +83,61 @@ export interface AdminSeoSetting {
   updatedAt: string
 }
 
-export async function getDashboardStats(secret: string): Promise<DashboardStats> {
-  return call<DashboardStats>('admin_dashboard_stats', { p_secret: secret })
+export interface AdminIdentity {
+  isAdmin: boolean
+  email: string | null
 }
 
-export async function getAllRooms(secret: string): Promise<AdminRoom[]> {
-  return call<AdminRoom[]>('admin_rooms_all', { p_secret: secret })
+// ── Auth (Supabase email + password) ────────────────────────────────────────
+
+/** Sign the admin client in with email + password. Throws on bad credentials. */
+export async function adminSignIn(email: string, password: string): Promise<void> {
+  if (!adminSupabase) throw new AppError('NOT_CONFIGURED')
+  const { error } = await adminSupabase.auth.signInWithPassword({ email, password })
+  if (error) throw new AppError('AUTH_REQUIRED', error.message)
 }
 
-export async function getNotices(secret: string): Promise<AdminNotice[]> {
-  return call<AdminNotice[]>('admin_notices_list', { p_secret: secret })
+/** Sign out of the admin client only — never touches the player session. */
+export async function adminSignOut(): Promise<void> {
+  if (!adminSupabase) return
+  await adminSupabase.auth.signOut({ scope: 'local' })
+}
+
+/**
+ * Ask the server who the current admin client is. Returns `isAdmin: false`
+ * when there is no session, so regular visitors never hit the RPC.
+ */
+export async function adminMe(): Promise<AdminIdentity> {
+  if (!adminSupabase) return { isAdmin: false, email: null }
+
+  const { data: sessionData } = await adminSupabase.auth.getSession()
+  if (!sessionData.session) return { isAdmin: false, email: null }
+
+  const { data, error } = await adminSupabase.rpc('admin_me')
+  if (error) return { isAdmin: false, email: null }
+
+  const result = data as { isAdmin?: boolean; email?: string | null } | null
+  return {
+    isAdmin: Boolean(result?.isAdmin),
+    email: result?.email ?? null,
+  }
+}
+
+// ── Data ────────────────────────────────────────────────────────────────────
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  return call<DashboardStats>('admin_dashboard_stats')
+}
+
+export async function getAllRooms(): Promise<AdminRoom[]> {
+  return call<AdminRoom[]>('admin_rooms_all')
+}
+
+export async function getNotices(): Promise<AdminNotice[]> {
+  return call<AdminNotice[]>('admin_notices_list')
 }
 
 export async function saveNotice(
-  secret: string,
   payload: {
     id?: string
     title: string
@@ -106,7 +148,6 @@ export async function saveNotice(
   },
 ): Promise<{ id: string }> {
   return call<{ id: string }>('admin_notice_save', {
-    p_secret: secret,
     p_id: payload.id ?? null,
     p_title: payload.title,
     p_body: payload.body,
@@ -116,16 +157,15 @@ export async function saveNotice(
   })
 }
 
-export async function deleteNotice(secret: string, id: string): Promise<void> {
-  await call<null>('admin_notice_delete', { p_secret: secret, p_id: id })
+export async function deleteNotice(id: string): Promise<void> {
+  await call<null>('admin_notice_delete', { p_id: id })
 }
 
-export async function getSeoSettings(secret: string): Promise<AdminSeoSetting[]> {
-  return call<AdminSeoSetting[]>('admin_seo_list', { p_secret: secret })
+export async function getSeoSettings(): Promise<AdminSeoSetting[]> {
+  return call<AdminSeoSetting[]>('admin_seo_list')
 }
 
 export async function saveSeoSetting(
-  secret: string,
   payload: {
     pagePath: string
     title?: string | null
@@ -134,7 +174,6 @@ export async function saveSeoSetting(
   },
 ): Promise<void> {
   await call<null>('admin_seo_save', {
-    p_secret: secret,
     p_page_path: payload.pagePath,
     p_title: payload.title ?? null,
     p_description: payload.description ?? null,
@@ -143,8 +182,8 @@ export async function saveSeoSetting(
 }
 
 /**
- * Fetch active notices to display as a site banner for all users.
- * No secret needed — the RPC is security-definer but only SELECTs active rows.
+ * Fetch active notices for the site banner. Uses the player client — the
+ * `admin_notices` RLS policy lets any authenticated user read active rows.
  */
 export async function fetchPublicNotices(): Promise<AdminNotice[]> {
   if (!supabase) return []

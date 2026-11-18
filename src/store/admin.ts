@@ -1,65 +1,48 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { adminMe, adminSignOut } from '../lib/adminApi'
+import { adminSupabase } from '../lib/supabase/adminClient'
 
 export type AdminSession = {
+  /** True only when Supabase has a session AND the server allowlist accepts it. */
   isAdmin: boolean
-  secret: string | null
-  setAdmin: (secret: string | null) => void
-  login: (secret: string) => boolean
-  logout: () => void
+  /** Email of the signed-in admin account. */
+  email: string | null
+  /** True while the initial session check is still running. */
+  checking: boolean
+  /** Re-check the current Supabase session against the server allowlist. */
+  refresh: () => Promise<boolean>
+  /** Sign out of the admin client only (the player session is untouched). */
+  logout: () => Promise<void>
 }
 
-const ADMIN_SECRET_KEY = 'pc.admin_secret'
+export const useAdminStore = create<AdminSession>()((set) => ({
+  isAdmin: false,
+  email: null,
+  checking: true,
 
-export const useAdminStore = create<AdminSession>()(
-  persist(
-    (set) => ({
-      isAdmin: false,
-      secret: null,
-      setAdmin: (secret) => set({ isAdmin: !!secret, secret }),
-      login: (secret) => {
-        const expected = import.meta.env.VITE_ADMIN_SECRET
-        if (expected && secret === expected) {
-          set({ isAdmin: true, secret })
-          try {
-            window.localStorage.setItem(ADMIN_SECRET_KEY, secret)
-          } catch {
-            // storage blocked; session lasts until refresh
-          }
-          return true
-        }
-        return false
-      },
-      logout: () => {
-        set({ isAdmin: false, secret: null })
-        try {
-          window.localStorage.removeItem(ADMIN_SECRET_KEY)
-        } catch {
-          // ignore
-        }
-      },
-    }),
-    {
-      name: ADMIN_SECRET_KEY,
-      partialize: (state) => ({ secret: state.secret }),
-    },
-  ),
-)
+  refresh: async () => {
+    const { isAdmin, email } = await adminMe()
+    set({ isAdmin, email, checking: false })
+    return isAdmin
+  },
+
+  logout: async () => {
+    await adminSignOut()
+    set({ isAdmin: false, email: null, checking: false })
+  },
+}))
 
 /**
- * Restore admin state from localStorage on module load. The secret is only
- * validated client-side against VITE_ADMIN_SECRET; every admin RPC also
- validates the secret server-side.
+ * Called once on app start. Restores the admin session from the dedicated
+ * Supabase admin client and verifies it against the server allowlist.
  */
 export function restoreAdminSession(): void {
-  if (typeof window === 'undefined') return
-  try {
-    const stored = window.localStorage.getItem(ADMIN_SECRET_KEY)
-    const expected = import.meta.env.VITE_ADMIN_SECRET
-    if (stored && expected && stored === expected) {
-      useAdminStore.setState({ isAdmin: true, secret: stored })
+  void useAdminStore.getState().refresh()
+
+  // Keep other tabs in sync: if the admin session ends anywhere, drop access.
+  adminSupabase?.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_OUT') {
+      useAdminStore.setState({ isAdmin: false, email: null, checking: false })
     }
-  } catch {
-    // ignore storage errors
-  }
+  })
 }

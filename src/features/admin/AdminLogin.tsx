@@ -1,34 +1,40 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, Link } from 'react-router-dom'
+import { Navigate, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ShieldAlert, LogIn, ArrowRight } from 'lucide-react'
+import { adminSignIn, adminSignOut } from '../../lib/adminApi'
 import { useAdminStore } from '../../store/admin'
 import { AppHeader } from '../../components/ui/AppHeader'
 
 export function AdminLogin() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { login, isAdmin } = useAdminStore()
-  const [secret, setSecret] = useState('')
+  const { isAdmin, refresh } = useAdminStore()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  if (isAdmin) {
-    navigate('/admin', { replace: true })
-    return null
-  }
+  if (isAdmin) return <Navigate to="/admin" replace />
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setError('')
     setSubmitting(true)
-    const ok = login(secret.trim())
-    setSubmitting(false)
-    if (ok) {
-      navigate('/admin', { replace: true })
-    } else {
+    try {
+      await adminSignIn(email.trim(), password)
+      const ok = await refresh()
+      if (ok) {
+        navigate('/admin', { replace: true })
+      } else {
+        await adminSignOut()
+        setError(t('admin.notAdminAccount'))
+      }
+    } catch {
       setError(t('admin.loginFailed'))
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -59,14 +65,29 @@ export function AdminLogin() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="label">{t('admin.secretLabel')}</label>
+              <label className="label">{t('admin.emailLabel')}</label>
+              <input
+                type="email"
+                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input"
+                placeholder={t('admin.emailPlaceholder')}
+                required
+                disabled={submitting}
+              />
+            </div>
+
+            <div>
+              <label className="label">{t('admin.passwordLabel')}</label>
               <input
                 type="password"
                 autoComplete="current-password"
-                value={secret}
-                onChange={(e) => setSecret(e.target.value)}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="input"
-                placeholder="••••••••"
+                placeholder={t('admin.passwordPlaceholder')}
+                required
                 disabled={submitting}
               />
             </div>
@@ -84,7 +105,7 @@ export function AdminLogin() {
           </form>
 
           <p className="mt-8 text-[12px] text-center text-slate-500 dark:text-slate-400">
-            {t('admin.secretNote')} <code className="font-mono text-pencil">VITE_ADMIN_SECRET</code>.
+            {t('admin.authNote')}
           </p>
         </motion.div>
 

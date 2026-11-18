@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Search, Clock, Link as LinkIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useAdminStore } from '../../store/admin'
 import { getAllRooms } from '../../lib/adminApi'
 
 const STATUS_COLOR: Record<string, string> = {
@@ -15,7 +14,6 @@ const STATUS_COLOR: Record<string, string> = {
 
 export function AdminRooms() {
   const { t } = useTranslation()
-  const { secret } = useAdminStore()
   const [rooms, setRooms] = useState<Array<{
     id: string
     code: string
@@ -34,13 +32,12 @@ export function AdminRooms() {
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
-    if (!secret) return
     setLoading(true)
-    getAllRooms(secret)
+    getAllRooms()
       .then((data) => setRooms(data))
       .catch(() => setRooms([]))
       .finally(() => setLoading(false))
-  }, [secret, refreshKey])
+  }, [refreshKey])
 
   const handleRefresh = () => setRefreshKey((k) => k + 1)
 
@@ -59,8 +56,6 @@ export function AdminRooms() {
       default: return status
     }
   }
-
-  if (!isAdmin()) return null
 
   return (
     <div className="space-y-6">
@@ -205,15 +200,4 @@ export function AdminRooms() {
       </p>
     </div>
   )
-}
-
-function isAdmin(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    const stored = window.localStorage.getItem('pc.admin_secret')
-    const expected = import.meta.env.VITE_ADMIN_SECRET
-    return Boolean(stored && expected && stored === expected)
-  } catch {
-    return false
-  }
 }

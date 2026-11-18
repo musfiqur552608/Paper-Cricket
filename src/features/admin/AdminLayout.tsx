@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -24,17 +24,27 @@ const NAV = [
 
 export function AdminLayout() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const location = useLocation()
-  const { isAdmin, logout } = useAdminStore()
+  const { isAdmin, checking, logout } = useAdminStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const isLoginRoute = location.pathname === '/admin/login'
 
-  if (!isAdmin && !isLoginRoute) {
-    navigate('/admin/login', { replace: true })
-    return null
+  if (checking) {
+    return (
+      <div className="grid min-h-dvh place-items-center px-5 text-slate-500 dark:text-slate-400">
+        {t('common.loading')}
+      </div>
+    )
   }
+
+  // The login page renders standalone; signed-in admins go to the dashboard.
+  if (isLoginRoute) {
+    return isAdmin ? <Navigate to="/admin" replace /> : <Outlet />
+  }
+
+  // Everything else needs a verified admin session.
+  if (!isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <div className="relative min-h-dvh overflow-x-clip">
@@ -73,7 +83,7 @@ export function AdminLayout() {
             })}
             <button
               type="button"
-              onClick={() => logout()}
+              onClick={() => { void logout() }}
               className="flex items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-semibold text-pencil transition hover:bg-pencil/10"
             >
               <LogOut size={16} />
@@ -136,7 +146,7 @@ export function AdminLayout() {
               <div className="pt-4 border-t border-[var(--card-border)] mt-3">
                 <button
                   type="button"
-                  onClick={() => { logout(); setSidebarOpen(false) }}
+                  onClick={() => { void logout(); setSidebarOpen(false) }}
                   className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-pencil transition hover:bg-pencil/10 w-full"
                 >
                   <LogOut size={18} />

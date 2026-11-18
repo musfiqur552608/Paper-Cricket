@@ -1,12 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { ShieldAlert, Key, Database, Monitor } from 'lucide-react'
+import clsx from 'clsx'
+import { ShieldAlert, Database, Monitor, UserRound } from 'lucide-react'
+import { IS_SUPABASE_CONFIGURED } from '../../config/gameConfig'
+import { useAdminStore } from '../../store/admin'
 
 export function AdminSettings() {
   const { t } = useTranslation()
-  const configured = Boolean(import.meta.env.VITE_ADMIN_SECRET)
-
-  if (!isAdmin()) return null
+  const { email } = useAdminStore()
+  const configured = IS_SUPABASE_CONFIGURED
 
   return (
     <div className="space-y-6">
@@ -36,10 +38,10 @@ export function AdminSettings() {
             statusOk: true,
           },
           {
-            title: t('admin.sessions'),
-            body: t('admin.sessionsBody'),
+            title: t('admin.authProvider'),
+            body: t('admin.authProviderBody'),
             icon: Monitor,
-            status: t('admin.localStorage'),
+            status: t('admin.sessionProvider'),
             statusOk: true,
           },
         ].map((card) => (
@@ -55,7 +57,7 @@ export function AdminSettings() {
             <p className="mb-4 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
               {card.body}
             </p>
-            <div className={clsx$1(
+            <div className={clsx(
               'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold',
               card.statusOk
                 ? 'border-leaf/30 bg-leaf/10 text-leaf dark:text-leaf'
@@ -69,36 +71,18 @@ export function AdminSettings() {
 
       <div className="paper-card p-5 sm:p-6">
         <div className="flex items-center gap-3 mb-4">
-          <Key size={20} className="text-pencil" />
-          <h3 className="font-semibold text-ink-deep dark:text-ink-deep">{t('admin.rotateSecret')}</h3>
+          <UserRound size={20} className="text-pencil" />
+          <h3 className="font-semibold text-ink-deep dark:text-ink-deep">
+            {t('admin.signedInAs')}
+          </h3>
         </div>
-        <p className="mb-4 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-          {t('admin.rotateSecretBody')}
+        <p className="font-mono text-sm text-slate-600 dark:text-slate-400 bg-white/30 dark:bg-white/10 rounded-lg px-3 py-2 border border-[var(--card-border)]">
+          {email ?? t('admin.notSet')}
         </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <span className="flex-1 font-mono text-xs text-slate-500 dark:text-slate-400 bg-white/30 dark:bg-white/10 rounded-lg px-3 py-2 border border-[var(--card-border)]">
-            {import.meta.env.VITE_ADMIN_SECRET ? '•••••••• (set)' : '(not set)'}
-          </span>
-          <p className="text-[11px] text-slate-400">
-            {t('admin.rotateSecretNote')}
-          </p>
-        </div>
+        <p className="mt-3 text-[11px] text-slate-400">
+          {t('admin.signedInAsNote')}
+        </p>
       </div>
     </div>
   )
-}
-
-function clsx$1(...classes: (string | boolean | undefined | null)[]): string {
-  return classes.filter(Boolean).join(' ')
-}
-
-function isAdmin(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    const stored = window.localStorage.getItem('pc.admin_secret')
-    const expected = import.meta.env.VITE_ADMIN_SECRET
-    return Boolean(stored && expected && stored === expected)
-  } catch {
-    return false
-  }
 }

@@ -3,13 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Save, Image as ImageIcon, Edit3 } from 'lucide-react'
 import { Dialog } from '../../components/ui/Dialog'
-import { useAdminStore } from '../../store/admin'
 import { getSeoSettings, saveSeoSetting, type AdminSeoSetting } from '../../lib/adminApi'
 
 export function AdminSeo() {
   const { t } = useTranslation()
-  const { secret } = useAdminStore()
-  if (!secret) return null
   const [settings, setSettings] = useState<AdminSeoSetting[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
@@ -23,13 +20,12 @@ export function AdminSeo() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (!secret) return
     setLoading(true)
-    getSeoSettings(secret)
+    getSeoSettings()
       .then((data) => setSettings(data))
       .catch(() => setSettings([]))
       .finally(() => setLoading(false))
-  }, [secret])
+  }, [])
 
   const openCreate = () => {
     setEditing(null)
@@ -52,7 +48,7 @@ export function AdminSeo() {
     if (!form.pagePath.trim()) return
     setSaving(true)
     try {
-      await saveSeoSetting(secret, {
+      await saveSeoSetting({
         pagePath: form.pagePath,
         title: form.title || null,
         description: form.description || null,
@@ -60,7 +56,7 @@ export function AdminSeo() {
       })
       setOpen(false)
       setEditing(null)
-      const refreshed = await getSeoSettings(secret)
+      const refreshed = await getSeoSettings()
       setSettings(refreshed)
     } catch {
       // handled by toast
@@ -72,11 +68,9 @@ export function AdminSeo() {
   const handleDelete = async (pagePath: string) => {
     if (!window.confirm(t('admin.deleteSeoConfirm'))) return
     // SEO settings are upsert-only via RPC; clear by saving empty values
-    await saveSeoSetting(secret, { pagePath, title: '', description: '', ogImage: '' })
+    await saveSeoSetting({ pagePath, title: '', description: '', ogImage: '' })
     setSettings(settings.filter((s) => s.pagePath !== pagePath))
   }
-
-  if (!isAdmin()) return null
 
   return (
     <div className="space-y-6">
@@ -256,15 +250,4 @@ export function AdminSeo() {
       </Dialog>
     </div>
   )
-}
-
-function isAdmin(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    const stored = window.localStorage.getItem('pc.admin_secret')
-    const expected = import.meta.env.VITE_ADMIN_SECRET
-    return Boolean(stored && expected && stored === expected)
-  } catch {
-    return false
-  }
 }
